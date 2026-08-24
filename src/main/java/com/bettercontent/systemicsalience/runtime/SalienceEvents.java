@@ -5,6 +5,7 @@ import com.bettercontent.systemicsalience.compat.BrewingCompat;
 import com.bettercontent.systemicsalience.compat.ColdSweatCompat;
 import com.bettercontent.systemicsalience.compat.EpicFightCompat;
 import com.bettercontent.systemicsalience.compat.ThirstCompat;
+import com.bettercontent.systemicsalience.config.SalienceConfig;
 import com.bettercontent.systemicsalience.metabolism.ConsumableProfiles;
 import com.bettercontent.systemicsalience.metabolism.MetabolicMath;
 import com.bettercontent.systemicsalience.metabolism.MetabolicState;
@@ -87,7 +88,7 @@ public final class SalienceEvents {
             double extraDepletion = DietBridge.applyCustomDecay(player, state);
             state.addDebt(2.0 * extraDepletion);
             BrewingCompat.suppressNumbedHearts(player);
-            if (state.sugar < 0.25 && state.debt > 0.0 && player.isSprinting()) {
+            if (state.sugar < SalienceConfig.SUGAR_DEBT_GATE.get() && state.debt > 0.0 && player.isSprinting()) {
                 ThirstCompat.addExhaustion(player, (float) (0.01 * state.debt));
             }
             repayDeferredDamage(player, state);
@@ -112,7 +113,7 @@ public final class SalienceEvents {
         if (event.isCanceled() || !(event.getPlayer() instanceof ServerPlayer player)) return;
         MetabolicState state = MetabolicStateStore.get(player);
         NutritionSnapshot nutrition = DietBridge.snapshot(player);
-        if (nutrition.effective(NutritionSnapshot.Group.GRAINS, state) < 0.65) return;
+        if (nutrition.effective(NutritionSnapshot.Group.GRAINS, state) < SalienceConfig.GRAIN_DURABILITY.get()) return;
 
         long now = player.level().getGameTime();
         long last = LAST_BLOCK_BREAK.getOrDefault(player.getUUID(), -100L);
@@ -151,7 +152,7 @@ public final class SalienceEvents {
         }
 
         double fruits = nutrition.effective(NutritionSnapshot.Group.FRUITS, state);
-        if (fruits >= 0.25 && alcohol == 0.0 && ThirstCompat.isDrink(stack)) {
+        if (fruits >= SalienceConfig.FRUIT_DRINK.get() && alcohol == 0.0 && ThirstCompat.isDrink(stack)) {
             int quenched = Math.max(2, (int) Math.round(2.0 * MetabolicMath.thresholdPotency(state.sugar)));
             ThirstCompat.addQuenched(player, quenched);
         }
@@ -162,7 +163,7 @@ public final class SalienceEvents {
         if (!(event.getEntity() instanceof ServerPlayer player) || !(event.getTarget() instanceof LivingEntity target)) return;
         MetabolicState state = MetabolicStateStore.get(player);
         double protein = DietBridge.snapshot(player).effective(NutritionSnapshot.Group.PROTEINS, state);
-        if (protein < 0.40) return;
+        if (protein < SalienceConfig.PROTEIN_IMPACT.get()) return;
 
         double potency = MetabolicMath.thresholdPotency(state.sugar);
         double dx = player.getX() - target.getX();
@@ -170,7 +171,7 @@ public final class SalienceEvents {
         target.knockback(0.18 * potency, dx, dz);
         EpicFightCompat.applyImpact(target, 0.15 * potency);
 
-        if (protein >= 0.92 && state.braceCooldown == 0) {
+        if (protein >= SalienceConfig.PROTEIN_BRACE.get() && state.braceCooldown == 0) {
             state.braced = true;
             state.braceCooldown = GameplayHooks.cooldown(45 * 20, state);
             EpicFightCompat.braceStunShield(player);
@@ -191,7 +192,7 @@ public final class SalienceEvents {
         if (event.getEntity() instanceof ServerPlayer target) {
             MetabolicState state = MetabolicStateStore.get(target);
             double vegetables = DietBridge.snapshot(target).effective(NutritionSnapshot.Group.VEGETABLES, state);
-            if (vegetables >= 0.95 && state.vegetableEmergencyCooldown == 0 && ColdSweatCompat.isTemperatureDamage(event.getSource())) {
+            if (vegetables >= SalienceConfig.VEGETABLE_EMERGENCY.get() && state.vegetableEmergencyCooldown == 0 && ColdSweatCompat.isTemperatureDamage(event.getSource())) {
                 event.setCanceled(true);
                 state.vegetableEmergencyCooldown = GameplayHooks.cooldown(180 * 20, state);
                 ColdSweatCompat.pullSafe(target);
@@ -238,13 +239,13 @@ public final class SalienceEvents {
         boolean nausea = effect == MobEffects.CONFUSION;
         boolean wither = effect == MobEffects.WITHER;
 
-        if (vegetables >= 0.95 && state.vegetableEmergencyCooldown == 0 && (poison || wither)) {
+        if (vegetables >= SalienceConfig.VEGETABLE_EMERGENCY.get() && state.vegetableEmergencyCooldown == 0 && (poison || wither)) {
             markEffectRemoval(state, effect);
             state.vegetableEmergencyCooldown = GameplayHooks.cooldown(180 * 20, state);
             ColdSweatCompat.pullSafe(player);
             return;
         }
-        if (vegetables >= 0.20 && state.recentConsumptionTicks > 0 && (poison || nausea)
+        if (vegetables >= SalienceConfig.VEGETABLE_RECENT_FOOD.get() && state.recentConsumptionTicks > 0 && (poison || nausea)
                 && player.getRandom().nextFloat() < 0.25f) {
             markEffectRemoval(state, effect);
         }
@@ -290,19 +291,19 @@ public final class SalienceEvents {
         double vegetables = nutrition.effective(NutritionSnapshot.Group.VEGETABLES, state);
         double potency = MetabolicMath.thresholdPotency(state.sugar);
 
-        if (fruits >= 0.55 && state.fruitSecondWindCooldown == 0
+        if (fruits >= SalienceConfig.FRUIT_SECOND_WIND.get() && state.fruitSecondWindCooldown == 0
                 && EpicFightCompat.restoreIfLow(player, 0.20 * potency, 0.20)) {
             state.fruitSecondWindCooldown = GameplayHooks.cooldown(90 * 20, state);
         }
 
         boolean sprinting = player.isSprinting();
         boolean wasSprinting = Boolean.TRUE.equals(WAS_SPRINTING.put(player.getUUID(), sprinting));
-        if (fruits >= 0.80 && sprinting && !wasSprinting) {
+        if (fruits >= SalienceConfig.FRUIT_SPRINT.get() && sprinting && !wasSprinting) {
             player.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
             state.sprintExhaustionFreeTicks = Math.max(state.sprintExhaustionFreeTicks, 5 * 20);
         }
 
-        if (fruits >= 0.95 && state.fruitFeastCooldown == 0
+        if (fruits >= SalienceConfig.FRUIT_FEAST.get() && state.fruitFeastCooldown == 0
                 && (EpicFightCompat.isStaminaBelow(player, 0.70) || ThirstCompat.needsQuenched(player))) {
             EpicFightCompat.restoreStamina(player, 0.40 * potency);
             ThirstCompat.addQuenched(player, Math.max(4, (int) Math.round(4.0 * potency)));
@@ -311,14 +312,14 @@ public final class SalienceEvents {
 
         boolean lowResources = player.getFoodData().getFoodLevel() <= 6 || ThirstCompat.isLow(player);
         boolean moving = player.getDeltaMovement().horizontalDistanceSqr() > 0.0004;
-        if (grains >= 0.90 && state.grainLongHaulCooldown == 0 && lowResources && moving) {
+        if (grains >= SalienceConfig.GRAIN_LONG_HAUL.get() && state.grainLongHaulCooldown == 0 && lowResources && moving) {
             state.grainLongHaulTicks = 15 * 20;
             state.grainLongHaulCooldown = GameplayHooks.cooldown(180 * 20, state);
         }
         if (state.grainLongHaulTicks > 0 && moving) player.setSprinting(true);
 
-        if (vegetables >= 0.75) ColdSweatCompat.dampenDrift(player);
-        EpicFightCompat.updateThresholdAttributes(player, fruits >= 0.95, state.nextStrikeTicks > 0);
+        if (vegetables >= SalienceConfig.VEGETABLE_DRIFT.get()) ColdSweatCompat.dampenDrift(player);
+        EpicFightCompat.updateThresholdAttributes(player, fruits >= SalienceConfig.FRUIT_FEAST.get(), state.nextStrikeTicks > 0);
     }
 
     private static void applyAlcohol(ServerPlayer player, MetabolicState state) {
@@ -328,11 +329,11 @@ public final class SalienceEvents {
         updateAttribute(player, "minecraft:generic.attack_speed", ALCOHOL_TIMING, -0.35 * impairment,
                 AttributeModifier.Operation.MULTIPLY_TOTAL, "systemic_salience_alcohol_timing");
         EpicFightCompat.reinforceStunShield(player, MetabolicMath.alcoholPositive(state.alcohol));
-        if (state.alcohol >= 0.85) player.setSprinting(false);
+        if (state.alcohol >= SalienceConfig.ALCOHOL_POSITIVE_CUTOFF.get()) player.setSprinting(false);
     }
 
     private static void accelerateHarmfulEffects(ServerPlayer player, MetabolicState state, NutritionSnapshot nutrition) {
-        if (player.tickCount % 5 != 0 || nutrition.effective(NutritionSnapshot.Group.VEGETABLES, state) < 0.50) return;
+        if (player.tickCount % 5 != 0 || nutrition.effective(NutritionSnapshot.Group.VEGETABLES, state) < SalienceConfig.VEGETABLE_EFFECT_RECOVERY.get()) return;
         for (MobEffectInstance effect : player.getActiveEffects()) {
             if (effect.getEffect().getCategory() != MobEffectCategory.HARMFUL || effect.isInfiniteDuration()) continue;
             MobEffectInstanceAccessor accessor = (MobEffectInstanceAccessor) effect;
@@ -358,7 +359,7 @@ public final class SalienceEvents {
     private static void rewardProteinSuccess(ServerPlayer player) {
         MetabolicState state = MetabolicStateStore.get(player);
         double protein = DietBridge.snapshot(player).effective(NutritionSnapshot.Group.PROTEINS, state);
-        if (protein < 0.70) return;
+        if (protein < SalienceConfig.PROTEIN_SUCCESS.get()) return;
         EpicFightCompat.restoreStamina(player, 0.20 * MetabolicMath.thresholdPotency(state.sugar));
         state.nextStrikeTicks = 4 * 20;
     }

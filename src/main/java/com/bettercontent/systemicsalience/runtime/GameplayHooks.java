@@ -1,5 +1,6 @@
 package com.bettercontent.systemicsalience.runtime;
 
+import com.bettercontent.systemicsalience.config.SalienceConfig;
 import com.bettercontent.systemicsalience.metabolism.MetabolicMath;
 import com.bettercontent.systemicsalience.metabolism.MetabolicState;
 import com.bettercontent.systemicsalience.metabolism.MetabolicStateStore;
@@ -16,11 +17,11 @@ public final class GameplayHooks {
 
         float multiplier = 1.0f;
         NutritionSnapshot nutrition = DietBridge.snapshot(player);
-        if (nutrition.effective(NutritionSnapshot.Group.GRAINS, state) >= 0.35
+        if (nutrition.effective(NutritionSnapshot.Group.GRAINS, state) >= SalienceConfig.GRAIN_SUSTAINED_WORK.get()
                 && isSustainedWork(state, player.level().getGameTime())) {
             multiplier *= 0.75f;
         }
-        if (state.sugar < 0.25) multiplier *= (float) (1.0 + 0.5 * state.debt);
+        if (state.sugar < SalienceConfig.SUGAR_DEBT_GATE.get()) multiplier *= (float) (1.0 + 0.5 * state.debt);
         return multiplier;
     }
 
