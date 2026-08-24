@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.bettercontent.systemicsalience.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "systemic_salience.refmap.json",
+  "mixins": [
+    "MobEffectInstanceAccessor",
+    "PlayerExhaustionMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

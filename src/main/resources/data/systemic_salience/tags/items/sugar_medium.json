@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:honey_bottle",
+    "farmersdelight:chocolate_pie_slice",
+    "brewinandchewin:cocoa_fudge",
+    "create:bar_of_chocolate"
+  ]
+}

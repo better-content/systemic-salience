@@ -1,0 +1,118 @@
+plugins {
+    id 'idea'
+    id 'maven-publish'
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+    id 'org.parchmentmc.librarian.forgegradle' version '1.+'
+    id 'org.spongepowered.mixin' version '0.7.+'
+}
+
+mixin {
+    add sourceSets.main, 'systemic_salience.refmap.json'
+    config 'systemic_salience.mixins.json'
+}
+
+version = mod_version
+group = mod_group_id
+
+base {
+    archivesName = 'systemic-salience'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+minecraft {
+    mappings channel: 'parchment', version: parchment_mappings
+    copyIdeResources = true
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+            property 'forge.logging.console.level', 'info'
+            mods { "${mod_id}" { source sourceSets.main } }
+        }
+        server {
+            workingDirectory project.file('run')
+            property 'forge.logging.console.level', 'info'
+            args '--nogui'
+            mods { "${mod_id}" { source sourceSets.main } }
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://cursemaven.com' }
+    maven { url = 'https://maven.parchmentmc.org' }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+
+    compileOnly fg.deobf('curse.maven:diet-443570:4813904')
+    compileOnly fg.deobf('curse.maven:brewin-and-chewin-637808:6237884')
+    compileOnly fg.deobf('curse.maven:thirst-was-taken-679270:6660408')
+    compileOnly fg.deobf('curse.maven:epic-fight-mod-405076:8049910')
+    compileOnly fg.deobf('curse.maven:cold-sweat-506194:7893262')
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.2'
+}
+
+processResources {
+    def props = [
+        mod_id: mod_id,
+        mod_name: mod_name,
+        mod_version: mod_version,
+        mod_authors: mod_authors,
+        mod_description: mod_description
+    ]
+    inputs.properties props
+    filesMatching('META-INF/mods.toml') { expand props }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.register('verifyFast') {
+    group = 'verification'
+    description = 'Runs deterministic unit and resource checks.'
+    dependsOn tasks.named('check')
+}
+
+tasks.register('verifyFull') {
+    group = 'verification'
+    description = 'Builds the runtime artifact after the deterministic checks.'
+    dependsOn tasks.named('verifyFast'), tasks.named('stageRuntimeJar')
+}
+
+tasks.named('jar', Jar).configure {
+    finalizedBy 'reobfJar'
+}
+
+tasks.register('stageRuntimeJar', Copy) {
+    group = 'build'
+    description = 'Stages the reobfuscated runtime jar using the canonical release filename.'
+    dependsOn tasks.named('reobfJar')
+    from layout.buildDirectory.file('reobfJar/output.jar')
+    into layout.buildDirectory.dir('libs')
+    rename { "${project.base.archivesName.get()}-${project.version}.jar" }
+}
+
+tasks.named('assemble').configure {
+    dependsOn tasks.named('stageRuntimeJar')
+}
+
+publishing {
+    publications { register('mavenJava', MavenPublication) { from components.java } }
+    repositories { maven { url = uri("${project.projectDir}/repo") } }
+}

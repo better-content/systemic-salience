@@ -1,0 +1,10 @@
+{
+  "replace": true,
+  "groups": [
+    "fruits",
+    "grains",
+    "proteins",
+    "vegetables"
+  ],
+  "effects": []
+}
