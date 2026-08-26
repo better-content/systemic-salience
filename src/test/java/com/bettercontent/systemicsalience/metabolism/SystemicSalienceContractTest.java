@@ -11,16 +11,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SystemicSalienceContractTest {
     @Test
-    void ordinaryFoodsAreNotPresentedAsSingleAspectBuckets() throws IOException {
+    void allEightNutritionIdentitiesArePresentedCategorically() throws IOException {
         String language;
         try (var stream = getClass().getResourceAsStream("/assets/systemic_salience/lang/en_us.json")) {
             assertTrue(stream != null);
             language = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
         }
-        assertFalse(language.contains("Fruits ·"));
-        assertFalse(language.contains("Grains ·"));
-        assertFalse(language.contains("Proteins ·"));
-        assertFalse(language.contains("Vegetables ·"));
+        for (String group : new String[]{"Fruits", "Grains", "Proteins", "Fats", "Vegetables", "Dairy", "Sugar", "Alcohol"}) {
+            assertTrue(language.contains(group), group);
+        }
         assertTrue(language.contains("Alcohol · best near center"));
         assertTrue(language.contains("Composure"));
         assertTrue(language.contains("Impairment"));
@@ -28,14 +27,8 @@ class SystemicSalienceContractTest {
 
     @Test
     void configuredThresholdsPreservePreparationOrdering() {
-        assertTrue(SalienceConfig.FRUIT_DRINK.getDefault() < SalienceConfig.FRUIT_SECOND_WIND.getDefault());
-        assertTrue(SalienceConfig.FRUIT_SECOND_WIND.getDefault() < SalienceConfig.FRUIT_SPRINT.getDefault());
-        assertTrue(SalienceConfig.FRUIT_SPRINT.getDefault() < SalienceConfig.FRUIT_FEAST.getDefault());
-        assertTrue(SalienceConfig.GRAIN_SUSTAINED_WORK.getDefault() < SalienceConfig.GRAIN_DURABILITY.getDefault());
-        assertTrue(SalienceConfig.GRAIN_DURABILITY.getDefault() < SalienceConfig.GRAIN_LONG_HAUL.getDefault());
-        assertTrue(SalienceConfig.PROTEIN_IMPACT.getDefault() < SalienceConfig.PROTEIN_BRACE.getDefault());
-        assertTrue(SalienceConfig.VEGETABLE_RECENT_FOOD.getDefault() < SalienceConfig.VEGETABLE_EFFECT_RECOVERY.getDefault());
-        assertTrue(SalienceConfig.VEGETABLE_EFFECT_RECOVERY.getDefault() < SalienceConfig.VEGETABLE_DRIFT.getDefault());
-        assertTrue(SalienceConfig.VEGETABLE_DRIFT.getDefault() < SalienceConfig.VEGETABLE_EMERGENCY.getDefault());
+        assertTrue(SalienceConfig.ORDINARY_THRESHOLD.getDefault() < SalienceConfig.PREPARED_THRESHOLD.getDefault());
+        assertTrue(SalienceConfig.PREPARED_THRESHOLD.getDefault() < SalienceConfig.FEAST_THRESHOLD.getDefault());
+        assertTrue(SalienceConfig.FEAST_THRESHOLD.getDefault() < 1.0);
     }
 }

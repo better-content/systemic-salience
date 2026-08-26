@@ -3,7 +3,7 @@ package com.bettercontent.systemicsalience.client;
 import com.bettercontent.systemicsalience.network.MetabolicSyncPacket;
 
 public final class ClientMetabolicState {
-    private static volatile MetabolicSyncPacket snapshot = new MetabolicSyncPacket(0, 0, 0, 0, 0, 0, 0, 0);
+    private static volatile MetabolicSyncPacket snapshot = new MetabolicSyncPacket(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
     private ClientMetabolicState() {}
 

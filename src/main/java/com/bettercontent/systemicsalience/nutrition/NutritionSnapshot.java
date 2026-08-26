@@ -3,8 +3,8 @@ package com.bettercontent.systemicsalience.nutrition;
 import com.bettercontent.systemicsalience.metabolism.MetabolicMath;
 import com.bettercontent.systemicsalience.metabolism.MetabolicState;
 
-public record NutritionSnapshot(float fruits, float grains, float proteins, float vegetables) {
-    public static final NutritionSnapshot EMPTY = new NutritionSnapshot(0.0f, 0.0f, 0.0f, 0.0f);
+public record NutritionSnapshot(float proteins, float grains, float fruits, float fats, float vegetables, float dairy) {
+    public static final NutritionSnapshot EMPTY = new NutritionSnapshot(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 
     public double effective(Group group, MetabolicState state) {
         return MetabolicMath.effectiveNutrient(actual(group), state.sugar, state.debt);
@@ -15,15 +15,19 @@ public record NutritionSnapshot(float fruits, float grains, float proteins, floa
             case FRUITS -> fruits;
             case GRAINS -> grains;
             case PROTEINS -> proteins;
+            case FATS -> fats;
             case VEGETABLES -> vegetables;
+            case DAIRY -> dairy;
         };
     }
 
     public enum Group {
-        FRUITS("fruits"),
-        GRAINS("grains"),
         PROTEINS("proteins"),
-        VEGETABLES("vegetables");
+        GRAINS("grains"),
+        FRUITS("fruits"),
+        FATS("fats"),
+        VEGETABLES("vegetables"),
+        DAIRY("dairy");
 
         public final String id;
 

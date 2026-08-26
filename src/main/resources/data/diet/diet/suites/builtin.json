@@ -1,10 +1,5 @@
 {
   "replace": true,
-  "groups": [
-    "fruits",
-    "grains",
-    "proteins",
-    "vegetables"
-  ],
+  "groups": ["proteins", "grains", "fruits", "fats", "vegetables", "dairy"],
   "effects": []
 }

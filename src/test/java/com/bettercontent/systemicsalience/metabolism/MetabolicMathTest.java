@@ -17,17 +17,18 @@ class MetabolicMathTest {
     }
 
     @Test
-    void sugarAmplifiesEffectsAndAcceleratesDecay() {
-        assertEquals(1.25, MetabolicMath.effectiveNutrient(1.0, 1.0, 0.0), 0.25);
-        assertEquals(1.5, MetabolicMath.thresholdPotency(1.0), 1.0e-9);
+    void sugarOwnsTempoWithoutAmplifyingOtherIdentities() {
+        assertEquals(1.0, MetabolicMath.effectiveNutrient(1.0, 1.0, 0.0), 1.0e-9);
+        assertEquals(1.0, MetabolicMath.thresholdPotency(1.0), 1.0e-9);
+        assertEquals(2.0, MetabolicMath.nutrientDecayMultiplier(0.25), 1.0e-9);
         assertEquals(5.0, MetabolicMath.nutrientDecayMultiplier(1.0), 1.0e-9);
         assertEquals(0.65, MetabolicMath.cooldownMultiplier(1.0, 0.0), 1.0e-9);
     }
 
     @Test
-    void debtSuppressesNutritionAndExtendsCooldownsAfterSugarFalls() {
-        assertEquals(0.6, MetabolicMath.effectiveNutrient(1.0, 0.0, 1.0), 1.0e-9);
-        assertEquals(2.0, MetabolicMath.cooldownMultiplier(0.0, 1.0), 1.0e-9);
+    void debtSlowsTempoWithoutSuppressingOtherIdentities() {
+        assertEquals(1.0, MetabolicMath.effectiveNutrient(1.0, 0.0, 1.0), 1.0e-9);
+        assertEquals(1.5, MetabolicMath.cooldownMultiplier(0.0, 1.0), 1.0e-9);
         assertEquals(1.0, MetabolicMath.tickDebt(1.0, 0.25), 1.0e-9);
         assertTrue(MetabolicMath.tickDebt(1.0, 0.24) < 1.0);
     }

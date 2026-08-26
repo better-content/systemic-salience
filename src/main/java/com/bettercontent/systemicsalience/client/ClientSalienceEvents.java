@@ -1,7 +1,6 @@
 package com.bettercontent.systemicsalience.client;
 
 import com.bettercontent.systemicsalience.SystemicSalienceMod;
-import com.bettercontent.systemicsalience.config.SalienceConfig;
 import com.bettercontent.systemicsalience.metabolism.MetabolicMath;
 import com.bettercontent.systemicsalience.network.MetabolicSyncPacket;
 import com.illusivesoulworks.diet.client.screen.DietScreen;
@@ -26,9 +25,6 @@ public final class ClientSalienceEvents {
         if (event.phase != TickEvent.Phase.END) return;
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null) return;
-        MetabolicSyncPacket state = ClientMetabolicState.snapshot();
-        if (state.alcohol() >= SalienceConfig.value(SalienceConfig.ALCOHOL_POSITIVE_CUTOFF, 0.85)) minecraft.player.setSprinting(false);
-        else if (state.longHaulTicks() > 0 && minecraft.player.input.hasForwardImpulse()) minecraft.player.setSprinting(true);
     }
 
     @SubscribeEvent
@@ -39,31 +35,32 @@ public final class ClientSalienceEvents {
         MetabolicSyncPacket state = ClientMetabolicState.snapshot();
         int x = event.getScreen().width - PANEL_WIDTH - 12;
         int y = 24;
-        graphics.fill(x - 6, y - 8, x + PANEL_WIDTH + 6, y + 190, 0xD0101216);
+        graphics.fill(x - 6, y - 8, x + PANEL_WIDTH + 6, y + 224, 0xD0101216);
         graphics.drawString(minecraft.font, Component.translatable("systemic_salience.ui.title"), x, y, 0xFFF1F1F1, false);
         y += 15;
-        y = profileBar(graphics, minecraft, x, y, Component.translatable("systemic_salience.ui.fruits"), state.fruits(), 0xFF6FEDBA,
-                aspect("✚", "Renewal", 0xFF6FEDBA), aspect("∞", "Endurance", 0xFF35BBD0));
-        y = profileBar(graphics, minecraft, x, y, Component.translatable("systemic_salience.ui.grains"), state.grains(), 0xFFCAA903,
-                aspect("⚒", "Work", 0xFFCAA903), aspect("∞", "Endurance", 0xFF35BBD0));
         y = profileBar(graphics, minecraft, x, y, Component.translatable("systemic_salience.ui.proteins"), state.proteins(), 0xFFE4717D,
-                aspect("✦", "Impact", 0xFFE4717D), aspect("◆", "Robustness", 0xFF1175FC));
+                aspect("✦", "Impact", 0xFFE4717D));
+        y = profileBar(graphics, minecraft, x, y, Component.translatable("systemic_salience.ui.grains"), state.grains(), 0xFFCAA903,
+                aspect("⚒", "Work", 0xFFCAA903));
+        y = profileBar(graphics, minecraft, x, y, Component.translatable("systemic_salience.ui.fruits"), state.fruits(), 0xFFC0E304,
+                aspect("➜", "Mobility", 0xFFC0E304));
+        y = profileBar(graphics, minecraft, x, y, Component.translatable("systemic_salience.ui.fats"), state.fats(), 0xFF35BBD0,
+                aspect("∞", "Endurance", 0xFF35BBD0));
         y = profileBar(graphics, minecraft, x, y, Component.translatable("systemic_salience.ui.vegetables"), state.vegetables(), 0xFF1175FC,
-                aspect("◆", "Robustness", 0xFF1175FC), aspect("✚", "Renewal", 0xFF6FEDBA));
+                aspect("◆", "Robustness", 0xFF1175FC));
+        y = profileBar(graphics, minecraft, x, y, Component.translatable("systemic_salience.ui.dairy"), state.dairy(), 0xFF6FEDBA,
+                aspect("✚", "Renewal", 0xFF6FEDBA));
         y += 3;
-        y = bar(graphics, minecraft, x, y, Component.translatable("systemic_salience.ui.sugar"), state.sugar(), 0xFFAA652B, false);
+        y = profileBar(graphics, minecraft, x, y, Component.translatable("systemic_salience.ui.sugar"), state.sugar(), 0xFFAA652B,
+                aspect("»", "Tempo", 0xFFAA652B));
         y = bar(graphics, minecraft, x, y, Component.translatable("systemic_salience.ui.debt"), state.debt(), 0xFF956641, false);
         y = alcoholBar(graphics, minecraft, x, y, state.alcohol());
-        if (state.longHaulTicks() > 0) {
-            graphics.drawString(minecraft.font, Component.translatable("systemic_salience.ui.long_haul", state.longHaulTicks() / 20 + 1),
-                    x, y + 1, 0xFFCAA903, false);
-        }
     }
 
     private static int profileBar(GuiGraphics graphics, Minecraft minecraft, int x, int y, Component label, float value,
-                                  int color, MutableComponent primary, MutableComponent secondary) {
+                                  int color, MutableComponent identity) {
         y = bar(graphics, minecraft, x, y, label, value, color, false);
-        MutableComponent profile = Component.literal("  ").append(primary).append(Component.literal("   ")).append(secondary);
+        MutableComponent profile = Component.literal("  ").append(identity);
         graphics.drawString(minecraft.font, profile, x, y - 2, 0xFFD8D8D8, false);
         return y + 9;
     }
@@ -74,8 +71,10 @@ public final class ClientSalienceEvents {
 
     private static int alcoholBar(GuiGraphics graphics, Minecraft minecraft, int x, int y, float alcohol) {
         y = bar(graphics, minecraft, x, y, Component.translatable("systemic_salience.ui.alcohol"), alcohol, 0xFF8A6CB2, true);
+        graphics.drawString(minecraft.font, Component.literal("  ").append(aspect("⊕", "Control", 0xFF8A6CB2)), x, y - 2, 0xFFD8D8D8, false);
+        y += 9;
         y = bar(graphics, minecraft, x, y, Component.translatable("systemic_salience.ui.alcohol_benefit"),
-                (float) MetabolicMath.alcoholPositive(alcohol), 0xFF35BBD0, false);
+                (float) MetabolicMath.alcoholPositive(alcohol), 0xFF8A6CB2, false);
         return bar(graphics, minecraft, x, y, Component.translatable("systemic_salience.ui.alcohol_impairment"),
                 (float) MetabolicMath.alcoholImpairment(alcohol), 0xFFE4717D, false);
     }

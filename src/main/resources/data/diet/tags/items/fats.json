@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    {"id": "#forge:eggs", "required": false},
+    {"id": "#forge:raw_eggs", "required": false},
+    {"id": "#forge:cooked_eggs", "required": false},
+    {"id": "minecraft:egg", "required": false},
+    {"id": "farmersdelight:fried_egg", "required": false},
+    {"id": "farmersdelight:bacon_and_eggs", "required": false},
+    {"id": "delightful:nut_butter_bottle", "required": false}
+  ]
+}

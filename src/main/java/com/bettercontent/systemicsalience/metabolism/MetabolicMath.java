@@ -23,17 +23,20 @@ public final class MetabolicMath {
 
     public static double nutrientDecayMultiplier(double sugar) {
         double s = clamp01(sugar);
-        return 1.0 + configured(SalienceConfig.SUGAR_DECAY_SCALE, 4.0) * s * s;
+        if (s >= 0.60) return 5.0;
+        if (s >= 0.25) return 2.0;
+        return 1.0;
     }
 
     public static double thresholdPotency(double sugar) {
-        double s = clamp01(sugar);
-        return 1.0 + configured(SalienceConfig.SUGAR_POTENCY_SCALE, 0.5) * s * s;
+        return 1.0;
     }
 
     public static double cooldownMultiplier(double sugar, double debt) {
         double s = clamp01(sugar);
-        return Math.max(0.1, (1.0 - 0.35 * s * s) * (1.0 + clamp01(debt)));
+        if (s >= 0.60) return 0.65;
+        if (s >= 0.25) return 0.85;
+        return 1.0 + 0.5 * clamp01(debt);
     }
 
     public static int adjustedCooldown(int baseTicks, double sugar, double debt) {
@@ -41,20 +44,20 @@ public final class MetabolicMath {
     }
 
     public static double effectiveNutrient(double nutrient, double sugar, double debt) {
-        double s = clamp01(sugar);
-        double amplified = clamp01(nutrient) * (1.0 + configured(SalienceConfig.NUTRIENT_AMPLIFICATION_SCALE, 0.25) * s * s);
-        double suppressed = amplified * (1.0 - configured(SalienceConfig.DEBT_SUPPRESSION_SCALE, 0.4) * clamp01(debt));
-        return clamp01(suppressed);
+        return clamp01(nutrient);
     }
 
     public static double alcoholPositive(double alcohol) {
         double a = clamp01(alcohol);
-        return a >= configured(SalienceConfig.ALCOHOL_POSITIVE_CUTOFF, 0.85) ? 0.0 : 4.0 * a * (1.0 - a);
+        if (a < 0.35 || a > 0.65) return 0.0;
+        return Math.max(0.0, 1.0 - Math.abs(a - 0.5) / 0.15);
     }
 
     public static double alcoholImpairment(double alcohol) {
         double a = clamp01(alcohol);
-        return a * a * a;
+        if (a <= 0.65) return 0.0;
+        double excess = (a - 0.65) / 0.35;
+        return excess * excess;
     }
 
     public static double tickSugar(double sugar) {

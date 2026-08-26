@@ -13,20 +13,15 @@ public final class GameplayHooks {
 
     public static float exhaustionMultiplier(ServerPlayer player) {
         MetabolicState state = MetabolicStateStore.get(player);
-        if (state.sprintExhaustionFreeTicks > 0) return 0.0f;
-
+        if (state.enduranceReserveTicks > 0) return 0.0f;
         float multiplier = 1.0f;
         NutritionSnapshot nutrition = DietBridge.snapshot(player);
-        if (nutrition.effective(NutritionSnapshot.Group.GRAINS, state) >= SalienceConfig.GRAIN_SUSTAINED_WORK.get()
-                && isSustainedWork(state, player.level().getGameTime())) {
-            multiplier *= 0.75f;
-        }
+        double fats = nutrition.effective(NutritionSnapshot.Group.FATS, state);
+        if (fats >= SalienceConfig.FEAST_THRESHOLD.get()) multiplier *= 0.60f;
+        else if (fats >= SalienceConfig.PREPARED_THRESHOLD.get()) multiplier *= 0.75f;
+        else if (fats >= SalienceConfig.ORDINARY_THRESHOLD.get()) multiplier *= 0.90f;
         if (state.sugar < SalienceConfig.SUGAR_DEBT_GATE.get()) multiplier *= (float) (1.0 + 0.5 * state.debt);
         return multiplier;
-    }
-
-    public static boolean isSustainedWork(MetabolicState state, long gameTime) {
-        return state.workStartTick >= 0L && state.lastWorkSeenTick >= gameTime - 5L && gameTime - state.workStartTick >= 80L;
     }
 
     public static int cooldown(int baseTicks, MetabolicState state) {

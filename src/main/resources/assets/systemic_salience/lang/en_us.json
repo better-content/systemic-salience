@@ -3,11 +3,12 @@
   "systemic_salience.ui.fruits": "Fruits",
   "systemic_salience.ui.grains": "Grains",
   "systemic_salience.ui.proteins": "Proteins",
+  "systemic_salience.ui.fats": "Fats",
   "systemic_salience.ui.vegetables": "Vegetables",
+  "systemic_salience.ui.dairy": "Dairy",
   "systemic_salience.ui.sugar": "Sugar load",
   "systemic_salience.ui.debt": "Metabolic debt",
   "systemic_salience.ui.alcohol": "Alcohol · best near center",
   "systemic_salience.ui.alcohol_benefit": "Composure",
-  "systemic_salience.ui.alcohol_impairment": "Impairment",
-  "systemic_salience.ui.long_haul": "Long Haul: %ss"
+  "systemic_salience.ui.alcohol_impairment": "Impairment"
 }

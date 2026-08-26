@@ -13,14 +13,14 @@ public final class ColdSweatCompat {
 
     private ColdSweatCompat() {}
 
-    public static void dampenDrift(ServerPlayer player) {
+    public static void dampenDrift(ServerPlayer player, double resistance) {
         if (!ModList.get().isLoaded("cold_sweat")) return;
         double current = Temperature.get(player, Temperature.Trait.BODY);
         Double previous = LAST_BODY.put(player.getUUID(), current);
         if (previous == null) return;
         boolean movingAway = Math.signum(current) == Math.signum(previous) && Math.abs(current) > Math.abs(previous);
         if (!movingAway) return;
-        double corrected = previous + (current - previous) * 0.75;
+        double corrected = previous + (current - previous) * Math.max(0.0, 1.0 - resistance);
         Temperature.set(player, Temperature.Trait.BODY, corrected);
         LAST_BODY.put(player.getUUID(), corrected);
     }

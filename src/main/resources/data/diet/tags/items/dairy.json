@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    {"id": "#forge:milk", "required": false},
+    {"id": "#brewinandchewin:cheese_wedges", "required": false},
+    {"id": "minecraft:milk_bucket", "required": false},
+    {"id": "brewinandchewin:flaxen_cheese_wedge", "required": false},
+    {"id": "brewinandchewin:scarlet_cheese_wedge", "required": false},
+    {"id": "ubesdelight:condensed_milk_bottle", "required": false},
+    {"id": "collectorsreap:cream_cheese", "required": false}
+  ]
+}

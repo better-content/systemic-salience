@@ -6,54 +6,30 @@ public final class MetabolicState {
     private static final String SUGAR = "sugar";
     private static final String DEBT = "debt";
     private static final String ALCOHOL = "alcohol";
-    private static final String DEFERRED_DAMAGE = "deferred_damage";
 
     public double sugar;
     public double debt;
     public double alcohol;
-    public float deferredDamage;
-    public int deferredGraceTicks;
 
-    public int fruitSecondWindCooldown;
-    public int fruitFeastCooldown;
-    public int grainLongHaulCooldown;
-    public int grainLongHaulTicks;
-    public int vegetableEmergencyCooldown;
-    public int sprintExhaustionFreeTicks;
-    public int nextStrikeTicks;
-    public int braceCooldown;
-    public boolean braced;
-
-    public int recentConsumptionTicks;
-    public boolean pendingRemoveNausea;
-    public boolean pendingRemovePoison;
-    public boolean pendingRemoveWither;
-
-    public long workStartTick = -1L;
-    public long lastWorkSeenTick = -100L;
-    public long lastMinedTick = -100L;
-    public int uninterruptedMinedBlocks;
-    public int pendingToolSlot = -1;
-    public int pendingToolDamage = -1;
-    public long pendingToolRestoreTick = -1L;
-
-    public double lastBodyTemperature = Double.NaN;
-    public boolean payingDeferredDamage;
+    public int heavyBlowCooldown;
+    public int enduranceReserveCooldown;
+    public int enduranceReserveTicks;
+    public int weatheredCooldown;
+    public int dairyCleanseCooldown;
+    public int sprintTicks;
+    public int workSequence;
+    public long lastBreakTick = -100L;
+    public long lastAttackTick = -100L;
 
     public void tickTransient() {
         sugar = MetabolicMath.tickSugar(sugar);
         alcohol = MetabolicMath.tickAlcohol(alcohol);
         debt = MetabolicMath.tickDebt(debt, sugar);
-        fruitSecondWindCooldown = decrement(fruitSecondWindCooldown);
-        fruitFeastCooldown = decrement(fruitFeastCooldown);
-        grainLongHaulCooldown = decrement(grainLongHaulCooldown);
-        grainLongHaulTicks = decrement(grainLongHaulTicks);
-        vegetableEmergencyCooldown = decrement(vegetableEmergencyCooldown);
-        sprintExhaustionFreeTicks = decrement(sprintExhaustionFreeTicks);
-        nextStrikeTicks = decrement(nextStrikeTicks);
-        braceCooldown = decrement(braceCooldown);
-        recentConsumptionTicks = decrement(recentConsumptionTicks);
-        deferredGraceTicks = decrement(deferredGraceTicks);
+        heavyBlowCooldown = decrement(heavyBlowCooldown);
+        enduranceReserveCooldown = decrement(enduranceReserveCooldown);
+        enduranceReserveTicks = decrement(enduranceReserveTicks);
+        weatheredCooldown = decrement(weatheredCooldown);
+        dairyCleanseCooldown = decrement(dairyCleanseCooldown);
     }
 
     public void addSugar(double amount) {
@@ -73,17 +49,10 @@ public final class MetabolicState {
         tag.putDouble(SUGAR, sugar);
         tag.putDouble(DEBT, debt);
         tag.putDouble(ALCOHOL, alcohol);
-        tag.putFloat(DEFERRED_DAMAGE, deferredDamage);
-        tag.putInt("deferred_grace", deferredGraceTicks);
-        tag.putInt("fruit_second_wind_cd", fruitSecondWindCooldown);
-        tag.putInt("fruit_feast_cd", fruitFeastCooldown);
-        tag.putInt("grain_long_haul_cd", grainLongHaulCooldown);
-        tag.putInt("grain_long_haul_ticks", grainLongHaulTicks);
-        tag.putInt("vegetable_emergency_cd", vegetableEmergencyCooldown);
-        tag.putInt("sprint_exhaustion_free_ticks", sprintExhaustionFreeTicks);
-        tag.putInt("next_strike_ticks", nextStrikeTicks);
-        tag.putInt("brace_cd", braceCooldown);
-        tag.putBoolean("braced", braced);
+        tag.putInt("heavy_blow_cd", heavyBlowCooldown);
+        tag.putInt("endurance_reserve_cd", enduranceReserveCooldown);
+        tag.putInt("weathered_cd", weatheredCooldown);
+        tag.putInt("dairy_cleanse_cd", dairyCleanseCooldown);
         return tag;
     }
 
@@ -92,25 +61,13 @@ public final class MetabolicState {
         state.sugar = MetabolicMath.clamp01(tag.getDouble(SUGAR));
         state.debt = MetabolicMath.clamp01(tag.getDouble(DEBT));
         state.alcohol = MetabolicMath.clamp01(tag.getDouble(ALCOHOL));
-        state.deferredDamage = Math.max(0.0f, tag.getFloat(DEFERRED_DAMAGE));
-        state.deferredGraceTicks = nonnegative(tag.getInt("deferred_grace"));
-        state.fruitSecondWindCooldown = nonnegative(tag.getInt("fruit_second_wind_cd"));
-        state.fruitFeastCooldown = nonnegative(tag.getInt("fruit_feast_cd"));
-        state.grainLongHaulCooldown = nonnegative(tag.getInt("grain_long_haul_cd"));
-        state.grainLongHaulTicks = nonnegative(tag.getInt("grain_long_haul_ticks"));
-        state.vegetableEmergencyCooldown = nonnegative(tag.getInt("vegetable_emergency_cd"));
-        state.sprintExhaustionFreeTicks = nonnegative(tag.getInt("sprint_exhaustion_free_ticks"));
-        state.nextStrikeTicks = nonnegative(tag.getInt("next_strike_ticks"));
-        state.braceCooldown = nonnegative(tag.getInt("brace_cd"));
-        state.braced = tag.getBoolean("braced");
+        state.heavyBlowCooldown = nonnegative(tag.getInt("heavy_blow_cd"));
+        state.enduranceReserveCooldown = nonnegative(tag.getInt("endurance_reserve_cd"));
+        state.weatheredCooldown = nonnegative(tag.getInt("weathered_cd"));
+        state.dairyCleanseCooldown = nonnegative(tag.getInt("dairy_cleanse_cd"));
         return state;
     }
 
-    private static int decrement(int ticks) {
-        return Math.max(0, ticks - 1);
-    }
-
-    private static int nonnegative(int value) {
-        return Math.max(0, value);
-    }
+    private static int decrement(int ticks) { return Math.max(0, ticks - 1); }
+    private static int nonnegative(int value) { return Math.max(0, value); }
 }

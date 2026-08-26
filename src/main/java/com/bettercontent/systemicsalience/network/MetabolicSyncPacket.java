@@ -7,20 +7,24 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
 public record MetabolicSyncPacket(
-        float fruits,
-        float grains,
         float proteins,
+        float grains,
+        float fruits,
+        float fats,
         float vegetables,
+        float dairy,
         float sugar,
         float debt,
         float alcohol,
         int longHaulTicks
 ) {
     public static void encode(MetabolicSyncPacket packet, FriendlyByteBuf buffer) {
-        buffer.writeFloat(packet.fruits);
-        buffer.writeFloat(packet.grains);
         buffer.writeFloat(packet.proteins);
+        buffer.writeFloat(packet.grains);
+        buffer.writeFloat(packet.fruits);
+        buffer.writeFloat(packet.fats);
         buffer.writeFloat(packet.vegetables);
+        buffer.writeFloat(packet.dairy);
         buffer.writeFloat(packet.sugar);
         buffer.writeFloat(packet.debt);
         buffer.writeFloat(packet.alcohol);
@@ -30,7 +34,8 @@ public record MetabolicSyncPacket(
     public static MetabolicSyncPacket decode(FriendlyByteBuf buffer) {
         return new MetabolicSyncPacket(
                 buffer.readFloat(), buffer.readFloat(), buffer.readFloat(), buffer.readFloat(),
-                buffer.readFloat(), buffer.readFloat(), buffer.readFloat(), buffer.readVarInt()
+                buffer.readFloat(), buffer.readFloat(), buffer.readFloat(), buffer.readFloat(),
+                buffer.readFloat(), buffer.readVarInt()
         );
     }
 
