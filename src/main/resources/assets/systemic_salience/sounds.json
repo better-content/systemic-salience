@@ -6,5 +6,6 @@
   "aspect.endurance": { "sounds": ["systemic_salience:aspect/endurance"] },
   "aspect.robustness": { "sounds": ["systemic_salience:aspect/robustness"] },
   "aspect.renewal": { "sounds": ["systemic_salience:aspect/renewal"] },
-  "aspect.control": { "sounds": ["systemic_salience:aspect/control"] }
+  "aspect.control": { "sounds": ["systemic_salience:aspect/control"] },
+  "aspect.tempo_broken": { "sounds": ["systemic_salience:aspect/tempo_broken"] }
 }

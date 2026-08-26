@@ -1,0 +1,83 @@
+# Every checked-in clip is a mono 48 kHz PCM24 excerpt of a CC0 source.
+# `source_sha256` identifies the exact checked-in excerpt used by the renderer.
+
+[[packs]]
+id = "owlish-sfx"
+title = "Owlish Media Sound Effects"
+creator = "OwlishMedia"
+page = "https://opengameart.org/content/sound-effects-pack"
+download = "https://opengameart.org/sites/default/files/Owlish%20Media%20Sound%20Effects.zip"
+license = "CC0-1.0"
+archive_sha256 = "57d7059fe2c0ea5f47c7554ace22a538ea22ab40bfc0906b71aa259afffd3d18"
+
+[[packs]]
+id = "owlish-clicks"
+title = "87 Clickety Clips"
+creator = "OwlishMedia"
+page = "https://opengameart.org/content/87-clickety-clips"
+download = "https://opengameart.org/sites/default/files/Click_Clips.zip"
+license = "CC0-1.0"
+archive_sha256 = "48a6d38931a5a388961b52aebedc9724193dd5aca1b3f13a7d63f66a24cd9884"
+
+[[packs]]
+id = "owlish-fabric"
+title = "Fabric Rustling"
+creator = "Iochi Glaucus"
+page = "https://opengameart.org/content/fabric-rustling"
+download = "https://opengameart.org/sites/default/files/rustling.ogg"
+license = "CC0-1.0"
+archive_sha256 = "897c0937041afdf3581427b80a7546f99d219d0008e12ff5500c2afdfa4b7a1e"
+
+[[packs]]
+id = "kenney-impact"
+title = "Impact Sounds"
+creator = "Kenney"
+page = "https://kenney.nl/assets/impact-sounds"
+download = "https://kenney.nl/media/pages/assets/impact-sounds/87b4ddecda-1677589768/kenney_impact-sounds.zip"
+license = "CC0-1.0"
+archive_sha256 = "029d734af1582474edf3a694d1b0cebc97c1c152f2f39fa34d4c2bafc5de77f8"
+
+[[packs]]
+id = "spring-various"
+title = "Various Sound Effects"
+creator = "Julie Damsgaard / Spring Spring"
+page = "https://opengameart.org/content/various-sound-effects-0"
+license = "CC0-1.0"
+
+# name | pack | original path | excerpt start/duration seconds | source SHA-256
+[manifest]
+clips = [
+  "owlish_hit|owlish-sfx|Impacts/hit.wav|0.00|0.35|f3f1801e367ccaa12b2ac2b44b15c8b8af36904c1488fa0b164998796fb33af8",
+  "owlish_slap|owlish-sfx|Impacts/slap2.wav|0.00|0.48|fc800d1115a052043143514d0960ddedb72b47f7b16e2761253b26342a35ffcb",
+  "owlish_grab|owlish-sfx|Impacts/shouldergrab.wav|0.00|0.75|261dd353899e63166bca5325558c0e4d1044d7dd5db6ef85822e6723602de928",
+  "owlish_clamour|owlish-sfx|Impacts/clamour3.wav|0.00|0.75|f1c9e112de468e054c7e14a521b6b38f85c450985bf6837517ae9306dd15dd09",
+  "owlish_scrape|owlish-sfx|Impacts/scrape1.wav|0.00|0.62|3025a012136c29a98ef3b5c52134e5772f4ec503d23026c8325c3c3c67d6cae9",
+  "owlish_tap|owlish-sfx|Impacts/tap.wav|0.00|0.95|756e7727b1e4246ee1e67bdebbb786294cfce40bb660d3f642ce54ba84df7d5c",
+  "blanket_one|owlish-sfx|Cloth, Rustle/320137__owlstorm__blanket-movement-1.wav|6.45|0.85|02b9589628d721acc08fae58cf9e9799ecadcc8a8a14de2b4193cc494798c48a",
+  "blanket_two|owlish-sfx|Cloth, Rustle/320138__owlstorm__blanket-movement-2.wav|0.65|0.90|3753b8d82d2d7d401295856e703a30fd48eda54b1a4b8143bb0513a9bb7c8430",
+  "blanket_three|owlish-sfx|Cloth, Rustle/320141__owlstorm__blanket-movement-3.wav|1.55|0.90|6ec6a8f5020e6d9d1b298b6eaa429edd1cdf946d8aa70da9fd02cd76ea3b9878",
+  "tissue_pull|owlish-sfx|Paper/tissue-pull.wav|0.55|1.05|720666914b84729b9f2954187ce7378f277a00a9abfbd4690e71f9baebb6ed9a",
+  "page_turn|owlish-sfx|Paper/pageturn1.wav|0.00|0.59|9372ac933cf1a45996469bad07c7a9f7cd7871e8075d710830b13b776eb4afa5",
+  "breath_male|owlish-sfx|Human/breath-male.wav|1.70|1.10|89f1bb137c37e34a98ccbb4ef700fcaf533bacca2266e61a3724cfdb5acfa822",
+  "breath_female|owlish-sfx|Human/breath-female.wav|1.35|1.20|a44ef78f5c9d63e59d9692f2052de681fc27879f91952ae5ba0aca517b0f370a",
+  "water_tap|owlish-sfx|Water/tap-water-1.wav|0.55|1.40|1b038b141f760457838426c6736633ad09c2774e2a4b8a1b4454f39ff10b448b",
+  "spray|owlish-sfx|Water/spray-bottle.wav|5.65|0.80|02189a6198bc43f38379b35ac7b5f883cba5cba0a1f48e0436212935939bf513",
+  "pill|owlish-sfx|Misc Foley/pill-bottle.wav|9.55|0.90|edf369009c091e0b8b64e1b4878558919bfc7c78a6be375ac262aaeb92300204",
+  "mouse|owlish-sfx|Technology/mouse-clicks-scrolls.wav|15.25|0.90|6cd45c3b493296b502ce5a9bc064c1c439a036e5fc7af4705aff8a62f74869dd",
+  "fabric_rustle|owlish-fabric|rustling.ogg|0.00|1.20|59ad0157eb4f6963df2ad2355bdad24d15c8426b20d26052c756b5b9ff3f71b1",
+  "click_one|owlish-clicks|click1.wav|0.00|0.21|1bb8b3acfcf9dc0e756f2eddf9004fce5cd8c858b6820961c2b1825f21583553",
+  "click_ten|owlish-clicks|click10.wav|0.00|0.38|8ba671f23b5144b04d29263ec4162f1f490dcaf4308bc93b48dd999ee7cac4c0",
+  "click_twenty|owlish-clicks|click20.wav|0.00|0.18|49ab104006c65d08272232757eb8a6c4d757054179cb419871d8e94f7df0f170",
+  "click_forty|owlish-clicks|click40.wav|0.30|0.50|de4967925a2231d3eff8da7dd73255e13319367e6794c78dfe34795badfcb0b8",
+  "click_sixty|owlish-clicks|click60.wav|0.00|0.07|e5f92b201fb30cc0795e9f3fd1a25d13e36dc958b0d9a803d61a5c17ff41a128",
+  "click_eighty|owlish-clicks|click80.wav|0.00|0.16|1f4ea88f06d2ab491ec1e3f9e0ce398096d888c786b4dec845e6ee079169071b",
+  "kenney_wood|kenney-impact|Audio/impactWood_heavy_000.ogg|0.00|0.31|0e444aa70aa768df92e376fec9c16ecbba6c955463d22d9a66f68aeab5168b92",
+  "kenney_soft|kenney-impact|Audio/impactSoft_heavy_002.ogg|0.00|0.57|986c29d59411cf1ed246a6fa51b6fe6e403f3dd4d977fe67a813dfaaf359f229",
+  "kenney_mining|kenney-impact|Audio/impactMining_002.ogg|0.00|0.80|74733b3bddad8503f0e8a931a8d94b4e77dc16acaa703383b7862497c63fb06f",
+  "kenney_plate|kenney-impact|Audio/impactPlate_heavy_003.ogg|0.00|0.35|b09938cc92fcd43112d9aee02dccafbc42a749fb98a1853c3beab65d555cb21c",
+  "kenney_metal|kenney-impact|Audio/impactMetal_medium_002.ogg|0.00|0.12|81f261499834b6b625d5ec28e693a4389bae6e168b383eabebc0a0b52b08354c",
+  "spring_stone_break|spring-various|break_stone.wav|0.00|0.85|9079d281ff653e5938bf55deb7022d1c651926e7414a863a78f5087a96afe409",
+  "spring_stone_small|spring-various|small_rock_impact.wav|0.00|0.54|baa18a849b057ebdf0383e80f1155bde1af9c20f37b0797c1e4529001da355f9",
+  "spring_stone_tap|spring-various|tap_stone.wav|0.00|0.76|501770345dec374af38282764e716a5578eb98b2715a050991d09527747c77a7",
+  "spring_weeds|spring-various|rustling_of_the_weeds.wav|0.00|1.08|3f2c461cd9f2bf5dd6fb8e8127fdc608c75166d3b5996ca3f2e1df490e2473fe",
+]

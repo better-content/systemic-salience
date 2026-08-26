@@ -375,7 +375,9 @@ public final class SalienceEvents {
         }
         if (!PresentationFlags.has(previous, PresentationFlags.TEMPO_CRASH)
                 && PresentationFlags.has(flags, PresentationFlags.TEMPO_CRASH)) {
-            activation(player, AspectIdentity.TEMPO, "Sugar crash");
+            action(player, AspectIdentity.TEMPO, "Sugar crash");
+            particles(player, AspectIdentity.TEMPO, player.getX(), player.getY() + 1.0, player.getZ(), 9);
+            player.level().playSound(null, player.blockPosition(), ModSounds.brokenTempo(), SoundSource.PLAYERS, .48f, 1.0f);
         }
         return previous != flags;
     }

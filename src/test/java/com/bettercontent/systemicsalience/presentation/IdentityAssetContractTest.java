@@ -14,14 +14,14 @@ import static org.junit.jupiter.api.Assertions.*;
 final class IdentityAssetContractTest {
     private static final String BADGE_HASH = "b59717a5da26f633cd120f09b750c15875577ec9c74a8c7838c32aea8ee5eeed";
     private static final Map<String, String> MOTIF_HASHES = Map.of(
-            "impact", "73f2a5256be3a4f0c85ab65aeaa6d139ac43103e8e8d24003b9a4119ea2ab51a",
-            "tempo", "e77950b8b2e29f7425af7ae1673ed12f325de741af149b1b308bb6af64d44665",
-            "work", "aeabd6b7a437211ff683fbb452e5671b84d106d8daab63c7333869e3f4cf8a3e",
-            "mobility", "ba1f67679ec62909c6bfb16532efed80e736c258ad9582037df423c04157a570",
-            "endurance", "6409e26c4f80c0586dc220542cd4a18d44089a3d7bda8ea79af94b5aa5d7e64d",
-            "robustness", "e914400a5a03a898528a1d6674398e20fca5d5778ea4c8f617df23958d780311",
-            "renewal", "6fe2b992a4ffd3bead0992d53bc6885ad86e24e0fd71e84f67b6f812ca061a21",
-            "control", "971dee8ac79c5961407651e16ac73821f8864923738d8b6c8d637e001e07d457"
+            "impact", "1371c31e65d10a4b9aff832bc0106ca97c6f81ff81b85b48f3355be864622da3",
+            "tempo", "d06478a8c71c6b77fae7118b8f2ec9b87142b87b7b83717366c0d2dfa025ee87",
+            "work", "11ee2b74351da1422015c214dd7c590e32eba40007292b1d6038f1961b963d05",
+            "mobility", "40a40c4e6827af3e227ebc19e7af79abd5fad8877df05832c69e30e5d319da2c",
+            "endurance", "391b23f4db4c7c149e1e6b95df6e7af5b59f20731f5229a7fc7fb2bb2d40f841",
+            "robustness", "83b490e48cc0de79b6ca80ee7cd9c07df35d88537d060717835919338078335e",
+            "renewal", "85c740fdb60b93f6e55083a6a1e1f76f8225ca1e8972c24ae9209db09cf0edaf",
+            "control", "19bde4f9b28e3d769b1a6a2b7675f8f82672b9c1283d2103249c7adca73ccf88"
     );
 
     @Test
@@ -32,6 +32,15 @@ final class IdentityAssetContractTest {
         assertEquals(144, image.getWidth()); assertEquals(18, image.getHeight());
         String font = new String(resource("/assets/systemic_salience/font/aspects.json").readAllBytes(), StandardCharsets.UTF_8);
         assertTrue(font.contains(""));
+    }
+
+    @Test
+    void sugarCrashHasItsOwnBrokenTempoMotif() throws Exception {
+        String sounds = new String(resource("/assets/systemic_salience/sounds.json").readAllBytes(), StandardCharsets.UTF_8);
+        assertTrue(sounds.contains("aspect.tempo_broken"));
+        byte[] bytes = resource("/assets/systemic_salience/sounds/aspect/tempo_broken.ogg").readAllBytes();
+        assertEquals("fb12d0e2905d11d5dab90f25fc5e635dd65dce57a2aa1e3e57b1c3f9240e8e23",
+                HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes)));
     }
 
     @Test
