@@ -34,4 +34,5 @@ public enum AspectIdentity {
     }
 
     public static Comparator<AspectIdentity> displayOrder() { return Comparator.comparingInt(value -> value.icon); }
+    public String badge() { return Character.toString(0xE100 + icon); }
 }

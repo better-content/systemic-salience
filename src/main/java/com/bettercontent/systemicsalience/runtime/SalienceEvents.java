@@ -17,6 +17,7 @@ import com.bettercontent.systemicsalience.nutrition.DietBridge;
 import com.bettercontent.systemicsalience.nutrition.NutritionSnapshot;
 import com.bettercontent.systemicsalience.presentation.AspectIdentity;
 import com.bettercontent.systemicsalience.presentation.NutritionTier;
+import com.bettercontent.systemicsalience.presentation.ModSounds;
 import com.bettercontent.systemicsalience.presentation.PresentationFlags;
 import com.bettercontent.systemicsalience.presentation.PresentationSnapshot;
 import com.illusivesoulworks.diet.api.DietEvent;
@@ -24,7 +25,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -138,9 +138,8 @@ public final class SalienceEvents {
         state.workSequence = state.lastBreakTick >= now - 60L ? Math.min(5, state.workSequence + 1) : 1;
         state.lastBreakTick = now;
         if (previous < 5 && state.workSequence == 5) {
-            action(player, AspectIdentity.WORK, "Work Rhythm ×5");
-            particles(player, AspectIdentity.WORK, event.getPos().getX() + .5, event.getPos().getY() + .7, event.getPos().getZ() + .5, 10);
-            player.level().playSound(null, player.blockPosition(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, .45f, 1.35f);
+            cueAt(player, AspectIdentity.WORK, "Work Rhythm ×5", event.getPos().getX() + .5,
+                    event.getPos().getY() + .7, event.getPos().getZ() + .5, 10);
         }
         SalienceNetwork.sync(player, DietBridge.snapshot(player), state);
     }
@@ -173,8 +172,8 @@ public final class SalienceEvents {
         double sugarBefore = state.sugar;
         if (sugar > 0.0) {
             state.addSugar(sugar);
-            if (sugarBefore < .60 && state.sugar >= .60) activation(player, AspectIdentity.TEMPO, "Sugar Tempo II", SoundEvents.AMETHYST_BLOCK_CHIME);
-            else if (sugarBefore < .25 && state.sugar >= .25) activation(player, AspectIdentity.TEMPO, "Sugar Tempo I", SoundEvents.AMETHYST_BLOCK_CHIME);
+            if (sugarBefore < .60 && state.sugar >= .60) activation(player, AspectIdentity.TEMPO, "Sugar Tempo II");
+            else if (sugarBefore < .25 && state.sugar >= .25) activation(player, AspectIdentity.TEMPO, "Sugar Tempo I");
         }
         double alcohol = ConsumableProfiles.alcohol(stack);
         if (alcohol > 0.0) {
@@ -185,7 +184,7 @@ public final class SalienceEvents {
             List<MobEffectInstance> preserved = PRESERVED_MILK_EFFECTS.remove(player.getUUID());
             if (preserved != null) {
                 preserved.forEach(player::addEffect);
-                activation(player, AspectIdentity.RENEWAL, "Renewal preserved", SoundEvents.AMETHYST_BLOCK_RESONATE);
+                activation(player, AspectIdentity.RENEWAL, "Benefits preserved");
             }
         }
         ConsumptionStart start = CONSUMPTION_STARTS.remove(player.getUUID());
@@ -205,9 +204,8 @@ public final class SalienceEvents {
             force += 1.0;
             state.heavyBlowCooldown = 8 * 20;
             EpicFightCompat.applyImpact(target, 1.0);
-            action(player, AspectIdentity.IMPACT, "Heavy Blow");
-            particles(player, AspectIdentity.IMPACT, target.getX(), target.getY() + target.getBbHeight() * .6, target.getZ(), 14);
-            player.level().playSound(null, target.blockPosition(), SoundEvents.PLAYER_ATTACK_KNOCKBACK, SoundSource.PLAYERS, .8f, .8f);
+            cueAt(player, AspectIdentity.IMPACT, "Heavy Blow", target.getX(),
+                    target.getY() + target.getBbHeight() * .6, target.getZ(), 14);
         } else if (force > 0.0) {
             EpicFightCompat.applyImpact(target, force);
         }
@@ -222,7 +220,7 @@ public final class SalienceEvents {
         if (DietBridge.snapshot(player).actual(NutritionSnapshot.Group.VEGETABLES) >= feast() && state.weatheredCooldown == 0) {
             event.setCanceled(true);
             state.weatheredCooldown = 90 * 20;
-            activation(player, AspectIdentity.ROBUSTNESS, "Weathered Guard", SoundEvents.SHIELD_BLOCK);
+            activation(player, AspectIdentity.ROBUSTNESS, "Weathered Guard");
         }
     }
 
@@ -233,7 +231,7 @@ public final class SalienceEvents {
         if (DietBridge.snapshot(player).actual(NutritionSnapshot.Group.VEGETABLES) >= feast() && state.weatheredCooldown == 0) {
             ColdSweatCompat.pullSafe(player);
             state.weatheredCooldown = 90 * 20;
-            activation(player, AspectIdentity.ROBUSTNESS, "Weathered Guard", SoundEvents.SHIELD_BLOCK);
+            activation(player, AspectIdentity.ROBUSTNESS, "Weathered Guard");
         }
     }
 
@@ -312,7 +310,7 @@ public final class SalienceEvents {
                 if (effect.getEffect().getCategory() == MobEffectCategory.HARMFUL && !effect.isInfiniteDuration()) {
                     player.removeEffect(effect.getEffect());
                     state.dairyCleanseCooldown = 90 * 20;
-                    activation(player, AspectIdentity.RENEWAL, "Renewal cleansed " + effect.getEffect().getDisplayName().getString(), SoundEvents.AMETHYST_BLOCK_RESONATE);
+                    activation(player, AspectIdentity.RENEWAL, "Cleansed " + effect.getEffect().getDisplayName().getString());
                     break;
                 }
             }
@@ -331,7 +329,7 @@ public final class SalienceEvents {
         if (player.getFoodData().getFoodLevel() <= 2 || ThirstCompat.isLow(player) || EpicFightCompat.isStaminaBelow(player, 0.10)) {
             state.enduranceReserveTicks = 5 * 20;
             state.enduranceReserveCooldown = 2 * 60 * 20;
-            activation(player, AspectIdentity.ENDURANCE, "Deep Reserve", SoundEvents.PLAYER_LEVELUP);
+            activation(player, AspectIdentity.ENDURANCE, "Deep Reserve");
         }
     }
 
@@ -340,6 +338,7 @@ public final class SalienceEvents {
         PresentationSnapshot presentation = PresentationSnapshot.create(player, current, state);
         int changedMask = 0;
         NutritionTier highestCrossing = null;
+        AspectIdentity audibleAspect = null;
         for (int index = 0; index < GROUPS.length; index++) {
             float before = start.nutrition().actual(GROUPS[index]);
             float after = current.actual(GROUPS[index]);
@@ -347,14 +346,14 @@ public final class SalienceEvents {
             NutritionTier oldTier = NutritionTier.of(before, ordinary(), prepared(), feast());
             NutritionTier newTier = NutritionTier.of(after, ordinary(), prepared(), feast());
             if (newTier.ordinal() > oldTier.ordinal()) {
-                highestCrossing = highestCrossing == null || newTier.ordinal() > highestCrossing.ordinal() ? newTier : highestCrossing;
+                if (highestCrossing == null || newTier.ordinal() > highestCrossing.ordinal()) {
+                    highestCrossing = newTier;
+                    audibleAspect = NUTRIENT_ASPECTS[index];
+                }
                 particles(player, NUTRIENT_ASPECTS[index], player.getX(), player.getY() + 1.0, player.getZ(), 5 + newTier.ordinal() * 2);
             }
         }
-        if (highestCrossing != null) {
-            float pitch = .9f + highestCrossing.ordinal() * .15f;
-            player.level().playSound(null, player.blockPosition(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, .5f, pitch);
-        }
+        if (audibleAspect != null) playAspectSound(player, audibleAspect, .36f);
         boolean sugarChanged = state.sugar > start.sugar() + .001;
         boolean alcoholChanged = state.alcohol > start.alcohol() + .001;
         if (changedMask == 0 && !sugarChanged && !alcoholChanged) return;
@@ -372,32 +371,75 @@ public final class SalienceEvents {
         if (previous < 0) return true;
         if (!PresentationFlags.has(previous, PresentationFlags.MOBILITY_STRIDE)
                 && PresentationFlags.has(flags, PresentationFlags.MOBILITY_STRIDE)) {
-            activation(player, AspectIdentity.MOBILITY, "Stride", SoundEvents.HORSE_GALLOP);
+            activation(player, AspectIdentity.MOBILITY, "Stride");
         }
         if (!PresentationFlags.has(previous, PresentationFlags.TEMPO_CRASH)
                 && PresentationFlags.has(flags, PresentationFlags.TEMPO_CRASH)) {
-            activation(player, AspectIdentity.TEMPO, "Sugar crash", SoundEvents.GENERIC_EXTINGUISH_FIRE);
+            activation(player, AspectIdentity.TEMPO, "Sugar crash");
         }
         return previous != flags;
     }
 
-    private static void activation(ServerPlayer player, AspectIdentity aspect, String label, net.minecraft.sounds.SoundEvent sound) {
+    private static void activation(ServerPlayer player, AspectIdentity aspect, String label) {
         action(player, aspect, label);
         particles(player, aspect, player.getX(), player.getY() + 1.0, player.getZ(), 9);
-        player.level().playSound(null, player.blockPosition(), sound, SoundSource.PLAYERS, .55f, 1.1f);
+        playAspectSound(player, aspect, .48f);
+    }
+
+    private static void cueAt(ServerPlayer player, AspectIdentity aspect, String label,
+                              double x, double y, double z, int count) {
+        action(player, aspect, label);
+        particles(player, aspect, x, y, z, count);
+        player.level().playSound(null, x, y, z, ModSounds.get(aspect), SoundSource.PLAYERS, .52f, 1.0f);
     }
 
     private static void action(ServerPlayer player, AspectIdentity aspect, String label) {
-        player.displayClientMessage(Component.literal(aspect.glyph + " " + label)
+        player.displayClientMessage(Component.literal(aspect.glyph + " " + aspect.displayName + " — " + label)
                 .withStyle(style -> style.withColor(aspect.color)), true);
+    }
+
+    private static void playAspectSound(ServerPlayer player, AspectIdentity aspect, float volume) {
+        player.level().playSound(null, player.blockPosition(), ModSounds.get(aspect), SoundSource.PLAYERS, volume, 1.0f);
     }
 
     private static void particles(ServerPlayer player, AspectIdentity aspect, double x, double y, double z, int count) {
         float red = ((aspect.color >> 16) & 255) / 255.0f;
         float green = ((aspect.color >> 8) & 255) / 255.0f;
         float blue = (aspect.color & 255) / 255.0f;
-        player.serverLevel().sendParticles(new DustParticleOptions(new Vector3f(red, green, blue), .85f),
-                x, y, z, count, .28, .35, .28, .02);
+        DustParticleOptions dust = new DustParticleOptions(new Vector3f(red, green, blue), .85f);
+        double angleBase = Math.atan2(player.getLookAngle().z, player.getLookAngle().x);
+        for (int index = 0; index < count; index++) {
+            double progress = count <= 1 ? 1.0 : index / (double) (count - 1);
+            double px = x, py = y, pz = z;
+            switch (aspect) {
+                case IMPACT -> {
+                    double angle = Math.PI * 2.0 * index / count;
+                    double radius = .12 + .48 * progress;
+                    px += Math.cos(angle) * radius; pz += Math.sin(angle) * radius; py += (index % 3 - 1) * .08;
+                }
+                case TEMPO -> {
+                    int pulse = index % 2; double distance = .18 + .48 * progress;
+                    px += Math.cos(angleBase) * distance + Math.cos(angleBase + Math.PI / 2) * (pulse == 0 ? -.12 : .12);
+                    pz += Math.sin(angleBase) * distance + Math.sin(angleBase + Math.PI / 2) * (pulse == 0 ? -.12 : .12);
+                }
+                case WORK -> { px += (index % 3 - 1) * .12; py += .45 - progress * .55; pz += ((index / 3) % 3 - 1) * .12; }
+                case MOBILITY -> {
+                    double distance = .12 + .62 * progress;
+                    px += Math.cos(angleBase) * distance; pz += Math.sin(angleBase) * distance; py += -.15 + Math.sin(progress * Math.PI) * .42;
+                }
+                case ENDURANCE -> { double angle = Math.PI * 2.0 * progress; px += Math.cos(angle) * .42; pz += Math.sin(angle) * .42; }
+                case ROBUSTNESS -> {
+                    double angle = Math.PI * 2.0 * (index % 6) / 6.0; double radius = .52 - .34 * progress;
+                    px += Math.cos(angle) * radius; pz += Math.sin(angle) * radius;
+                }
+                case RENEWAL -> { double angle = Math.PI * 3.0 * progress; px += Math.cos(angle) * (.22 - .1 * progress); pz += Math.sin(angle) * (.22 - .1 * progress); py += progress * .7 - .2; }
+                case CONTROL -> {
+                    double angle = Math.PI * .5 * (index % 4); double radius = .5 * (1.0 - progress);
+                    px += Math.cos(angle) * radius; pz += Math.sin(angle) * radius;
+                }
+            }
+            player.serverLevel().sendParticles(dust, px, py, pz, 1, 0, 0, 0, 0);
+        }
     }
 
     private record ConsumptionStart(NutritionSnapshot nutrition, double sugar, double debt, double alcohol) {}

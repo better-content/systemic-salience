@@ -13,6 +13,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class MealRecap {
+    private static final net.minecraft.resources.ResourceLocation ASPECT_FONT =
+            new net.minecraft.resources.ResourceLocation("systemic_salience", "aspects");
+    private static final net.minecraft.resources.ResourceLocation DEFAULT_FONT =
+            new net.minecraft.resources.ResourceLocation("minecraft", "default");
     private static final int SETTLE_TICKS = 25;
     private static final int DISPLAY_TICKS = 80;
     private static final Map<AspectIdentity, Entry> ENTRIES = new LinkedHashMap<>();
@@ -82,23 +86,27 @@ public final class MealRecap {
 
     private record Entry(AspectIdentity aspect, NutritionTier tier, float value, int seconds, State state) {
         MutableComponent component() {
-            MutableComponent result = Component.literal(aspect.glyph + " " + label()).withStyle(style -> style.withColor(aspect.color));
+            MutableComponent result = Component.literal(aspect.badge() + " ").withStyle(style -> style.withFont(ASPECT_FONT))
+                    .append(Component.literal(aspect.glyph + " " + label())
+                            .withStyle(style -> style.withFont(DEFAULT_FONT).withColor(aspect.color)));
             String time = duration(seconds);
-            if (!time.isEmpty()) result.append(Component.literal(" · " + time).withStyle(style -> style.withColor(0xaaaaaa)));
+            if (!time.isEmpty()) result.append(Component.literal(" · " + time)
+                    .withStyle(style -> style.withFont(DEFAULT_FONT).withColor(0xaaaaaa)));
             return result;
         }
 
         String label() {
             return switch (state) {
                 case NUTRIENT -> aspect.representative.substring(0, 1).toUpperCase() + aspect.representative.substring(1)
-                        + " — " + (tier == NutritionTier.BUILDING ? "Building · " + Math.round(value * 100) + "%"
+                        + " — " + aspect.glyph + " " + aspect.displayName + " — "
+                        + (tier == NutritionTier.BUILDING ? "Building · " + Math.round(value * 100) + "%"
                         : tier.name().substring(0, 1) + tier.name().substring(1).toLowerCase());
-                case SUGAR_ONE -> "Sugar — Tempo I · nutrition burns 2×";
-                case SUGAR_TWO -> "Sugar — Tempo II · nutrition burns 5×";
-                case SUGAR_CRASH -> "Sugar crash";
-                case ALCOHOL_LOW -> "Alcohol — Low";
-                case ALCOHOL_COMPOSED -> "Alcohol — Composed";
-                case ALCOHOL_IMPAIRED -> "Alcohol — Impaired";
+                case SUGAR_ONE -> "Sugar — » Tempo I · nutrition burns 2×";
+                case SUGAR_TWO -> "Sugar — » Tempo II · nutrition burns 5×";
+                case SUGAR_CRASH -> "Sugar — » Tempo crash";
+                case ALCOHOL_LOW -> "Alcohol — ⊕ Control · Low";
+                case ALCOHOL_COMPOSED -> "Alcohol — ⊕ Control · Composed";
+                case ALCOHOL_IMPAIRED -> "Alcohol — ⊕ Control · Impaired";
             };
         }
     }

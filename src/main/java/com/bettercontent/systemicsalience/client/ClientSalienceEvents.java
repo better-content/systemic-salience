@@ -31,7 +31,8 @@ import java.util.List;
 @Mod.EventBusSubscriber(modid = SystemicSalienceMod.MOD_ID, value = Dist.CLIENT)
 public final class ClientSalienceEvents {
     private static final int PANEL_WIDTH = 212;
-    private static final ResourceLocation ICONS = new ResourceLocation(SystemicSalienceMod.MOD_ID, "textures/gui/nutrition_states.png");
+    private static final ResourceLocation ICONS = new ResourceLocation(SystemicSalienceMod.MOD_ID, "textures/gui/aspect_badges.png");
+    private static final ResourceLocation ASPECT_FONT = new ResourceLocation(SystemicSalienceMod.MOD_ID, "aspects");
 
     private ClientSalienceEvents() {}
 
@@ -81,7 +82,10 @@ public final class ClientSalienceEvents {
             if (index > 0) line.append(Component.literal(" · ").withStyle(style -> style.withColor(0x777777)));
             String name = identity == AspectIdentity.TEMPO ? "Sugar" : identity == AspectIdentity.CONTROL ? "Alcohol"
                     : identity.representative.substring(0, 1).toUpperCase() + identity.representative.substring(1);
-            line.append(Component.literal(identity.glyph + " " + name).withStyle(style -> style.withColor(identity.color)));
+            line.append(Component.literal(name + " — ").withStyle(style -> style.withColor(identity.color)))
+                    .append(Component.literal(identity.badge() + " ").withStyle(style -> style.withFont(ASPECT_FONT)))
+                    .append(Component.literal(identity.glyph + " " + identity.displayName)
+                            .withStyle(style -> style.withColor(identity.color)));
         }
         event.getToolTip().add(line);
     }
