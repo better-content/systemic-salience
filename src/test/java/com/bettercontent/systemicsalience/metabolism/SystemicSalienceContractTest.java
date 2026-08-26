@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import javax.imageio.ImageIO;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -30,5 +31,16 @@ class SystemicSalienceContractTest {
         assertTrue(SalienceConfig.ORDINARY_THRESHOLD.getDefault() < SalienceConfig.PREPARED_THRESHOLD.getDefault());
         assertTrue(SalienceConfig.PREPARED_THRESHOLD.getDefault() < SalienceConfig.FEAST_THRESHOLD.getDefault());
         assertTrue(SalienceConfig.FEAST_THRESHOLD.getDefault() < 1.0);
+    }
+
+    @Test
+    void readinessStripContainsExactlyEightSquareCells() throws IOException {
+        try (var stream = getClass().getResourceAsStream("/assets/systemic_salience/textures/gui/nutrition_states.png")) {
+            assertTrue(stream != null);
+            var image = ImageIO.read(stream);
+            assertTrue(image != null);
+            assertTrue(image.getHeight() == 18);
+            assertTrue(image.getWidth() == image.getHeight() * 8);
+        }
     }
 }

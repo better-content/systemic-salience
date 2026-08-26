@@ -12,11 +12,20 @@ import com.bettercontent.systemicsalience.metabolism.MetabolicState;
 import com.bettercontent.systemicsalience.metabolism.MetabolicStateStore;
 import com.bettercontent.systemicsalience.mixin.MobEffectInstanceAccessor;
 import com.bettercontent.systemicsalience.network.SalienceNetwork;
+import com.bettercontent.systemicsalience.network.MealFeedbackPacket;
 import com.bettercontent.systemicsalience.nutrition.DietBridge;
 import com.bettercontent.systemicsalience.nutrition.NutritionSnapshot;
+import com.bettercontent.systemicsalience.presentation.AspectIdentity;
+import com.bettercontent.systemicsalience.presentation.NutritionTier;
+import com.bettercontent.systemicsalience.presentation.PresentationFlags;
+import com.bettercontent.systemicsalience.presentation.PresentationSnapshot;
 import com.illusivesoulworks.diet.api.DietEvent;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
@@ -35,6 +44,7 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,6 +64,13 @@ public final class SalienceEvents {
     private static final UUID ALCOHOL_RECOIL = UUID.fromString("6b26319b-81c4-4b3e-8dd6-d2586fd23467");
     private static final UUID ALCOHOL_DISPERSION = UUID.fromString("219ddb4f-3df3-43c6-828c-f1bf7aff5bb8");
     private static final Map<UUID, List<MobEffectInstance>> PRESERVED_MILK_EFFECTS = new HashMap<>();
+    private static final Map<UUID, ConsumptionStart> CONSUMPTION_STARTS = new HashMap<>();
+    private static final Map<UUID, PendingMeal> PENDING_MEALS = new HashMap<>();
+    private static final NutritionSnapshot.Group[] GROUPS = NutritionSnapshot.Group.values();
+    private static final AspectIdentity[] NUTRIENT_ASPECTS = {
+            AspectIdentity.IMPACT, AspectIdentity.WORK, AspectIdentity.MOBILITY,
+            AspectIdentity.ENDURANCE, AspectIdentity.ROBUSTNESS, AspectIdentity.RENEWAL
+    };
 
     private SalienceEvents() {}
 
@@ -71,9 +88,20 @@ public final class SalienceEvents {
         NutritionSnapshot nutrition = DietBridge.snapshot(player);
 
         state.sprintTicks = player.isSprinting() ? state.sprintTicks + 1 : 0;
+        if (state.workSequence > 0 && state.lastBreakTick < player.level().getGameTime() - 60L) state.workSequence = 0;
         applyIdentityModifiers(player, state, nutrition);
         applyRenewal(player, state, nutrition);
         applyEnduranceReserve(player, state, nutrition);
+
+        PendingMeal pending = PENDING_MEALS.get(player.getUUID());
+        if (pending != null && player.level().getGameTime() >= pending.dueTick()) {
+            finishMealFeedback(player, state, pending.start());
+            PENDING_MEALS.remove(player.getUUID());
+            nutrition = DietBridge.snapshot(player);
+        }
+
+        PresentationSnapshot presentation = PresentationSnapshot.create(player, nutrition, state);
+        boolean presentationChanged = updatePresentationFeedback(player, state, presentation.flags());
 
         if (player.tickCount % 20 == 0) {
             double extraDepletion = DietBridge.applyCustomDecay(player, state);
@@ -81,6 +109,8 @@ public final class SalienceEvents {
             BrewingCompat.suppressNumbedHearts(player);
             MetabolicStateStore.save(player);
             SalienceNetwork.sync(player, DietBridge.snapshot(player), state);
+        } else if (presentationChanged) {
+            SalienceNetwork.sync(player, nutrition, state);
         }
     }
 
@@ -104,19 +134,34 @@ public final class SalienceEvents {
             return;
         }
         long now = player.level().getGameTime();
+        int previous = state.workSequence;
         state.workSequence = state.lastBreakTick >= now - 60L ? Math.min(5, state.workSequence + 1) : 1;
         state.lastBreakTick = now;
+        if (previous < 5 && state.workSequence == 5) {
+            action(player, AspectIdentity.WORK, "Work Rhythm ×5");
+            particles(player, AspectIdentity.WORK, event.getPos().getX() + .5, event.getPos().getY() + .7, event.getPos().getZ() + .5, 10);
+            player.level().playSound(null, player.blockPosition(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, .45f, 1.35f);
+        }
+        SalienceNetwork.sync(player, DietBridge.snapshot(player), state);
     }
 
     @SubscribeEvent
     public static void onUseStart(LivingEntityUseItemEvent.Start event) {
-        if (!(event.getEntity() instanceof ServerPlayer player) || !event.getItem().is(net.minecraft.world.item.Items.MILK_BUCKET)) return;
-        if (DietBridge.snapshot(player).actual(NutritionSnapshot.Group.DAIRY) < prepared()) return;
-        List<MobEffectInstance> beneficial = player.getActiveEffects().stream()
-                .filter(effect -> effect.getEffect().isBeneficial())
-                .map(MobEffectInstance::new)
-                .toList();
-        PRESERVED_MILK_EFFECTS.put(player.getUUID(), beneficial);
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        ItemStack stack = event.getItem();
+        if (stack.isEdible() || ConsumableProfiles.sugar(stack) > 0.0 || ConsumableProfiles.isAlcohol(stack)
+                || stack.is(net.minecraft.world.item.Items.MILK_BUCKET)) {
+            MetabolicState state = MetabolicStateStore.get(player);
+            CONSUMPTION_STARTS.put(player.getUUID(), new ConsumptionStart(DietBridge.snapshot(player), state.sugar, state.debt, state.alcohol));
+        }
+        if (stack.is(net.minecraft.world.item.Items.MILK_BUCKET)
+                && DietBridge.snapshot(player).actual(NutritionSnapshot.Group.DAIRY) >= prepared()) {
+            List<MobEffectInstance> beneficial = player.getActiveEffects().stream()
+                    .filter(effect -> effect.getEffect().isBeneficial())
+                    .map(MobEffectInstance::new)
+                    .toList();
+            PRESERVED_MILK_EFFECTS.put(player.getUUID(), beneficial);
+        }
     }
 
     @SubscribeEvent
@@ -125,7 +170,12 @@ public final class SalienceEvents {
         ItemStack stack = event.getItem();
         MetabolicState state = MetabolicStateStore.get(player);
         double sugar = ConsumableProfiles.sugar(stack);
-        if (sugar > 0.0) state.addSugar(sugar);
+        double sugarBefore = state.sugar;
+        if (sugar > 0.0) {
+            state.addSugar(sugar);
+            if (sugarBefore < .60 && state.sugar >= .60) activation(player, AspectIdentity.TEMPO, "Sugar Tempo II", SoundEvents.AMETHYST_BLOCK_CHIME);
+            else if (sugarBefore < .25 && state.sugar >= .25) activation(player, AspectIdentity.TEMPO, "Sugar Tempo I", SoundEvents.AMETHYST_BLOCK_CHIME);
+        }
         double alcohol = ConsumableProfiles.alcohol(stack);
         if (alcohol > 0.0) {
             state.addAlcohol(alcohol);
@@ -133,8 +183,13 @@ public final class SalienceEvents {
         }
         if (stack.is(net.minecraft.world.item.Items.MILK_BUCKET)) {
             List<MobEffectInstance> preserved = PRESERVED_MILK_EFFECTS.remove(player.getUUID());
-            if (preserved != null) preserved.forEach(player::addEffect);
+            if (preserved != null) {
+                preserved.forEach(player::addEffect);
+                activation(player, AspectIdentity.RENEWAL, "Renewal preserved", SoundEvents.AMETHYST_BLOCK_RESONATE);
+            }
         }
+        ConsumptionStart start = CONSUMPTION_STARTS.remove(player.getUUID());
+        if (start != null) PENDING_MEALS.put(player.getUUID(), new PendingMeal(start, player.level().getGameTime() + 1L));
     }
 
     @SubscribeEvent
@@ -150,6 +205,9 @@ public final class SalienceEvents {
             force += 1.0;
             state.heavyBlowCooldown = 8 * 20;
             EpicFightCompat.applyImpact(target, 1.0);
+            action(player, AspectIdentity.IMPACT, "Heavy Blow");
+            particles(player, AspectIdentity.IMPACT, target.getX(), target.getY() + target.getBbHeight() * .6, target.getZ(), 14);
+            player.level().playSound(null, target.blockPosition(), SoundEvents.PLAYER_ATTACK_KNOCKBACK, SoundSource.PLAYERS, .8f, .8f);
         } else if (force > 0.0) {
             EpicFightCompat.applyImpact(target, force);
         }
@@ -164,6 +222,7 @@ public final class SalienceEvents {
         if (DietBridge.snapshot(player).actual(NutritionSnapshot.Group.VEGETABLES) >= feast() && state.weatheredCooldown == 0) {
             event.setCanceled(true);
             state.weatheredCooldown = 90 * 20;
+            activation(player, AspectIdentity.ROBUSTNESS, "Weathered Guard", SoundEvents.SHIELD_BLOCK);
         }
     }
 
@@ -174,6 +233,7 @@ public final class SalienceEvents {
         if (DietBridge.snapshot(player).actual(NutritionSnapshot.Group.VEGETABLES) >= feast() && state.weatheredCooldown == 0) {
             ColdSweatCompat.pullSafe(player);
             state.weatheredCooldown = 90 * 20;
+            activation(player, AspectIdentity.ROBUSTNESS, "Weathered Guard", SoundEvents.SHIELD_BLOCK);
         }
     }
 
@@ -206,6 +266,8 @@ public final class SalienceEvents {
         MetabolicStateStore.unload(player);
         ColdSweatCompat.unload(player);
         PRESERVED_MILK_EFFECTS.remove(player.getUUID());
+        CONSUMPTION_STARTS.remove(player.getUUID());
+        PENDING_MEALS.remove(player.getUUID());
     }
 
     private static void applyIdentityModifiers(ServerPlayer player, MetabolicState state, NutritionSnapshot nutrition) {
@@ -239,6 +301,7 @@ public final class SalienceEvents {
         EpicFightCompat.reinforceStunShield(player, MetabolicMath.alcoholPositive(state.alcohol));
         if (state.alcohol >= 0.90 && player.tickCount % 80 == 0) {
             player.push((player.getRandom().nextDouble() - 0.5) * 0.45, 0.0, (player.getRandom().nextDouble() - 0.5) * 0.45);
+            particles(player, AspectIdentity.CONTROL, player.getX(), player.getY() + .3, player.getZ(), 3);
         }
     }
 
@@ -249,6 +312,7 @@ public final class SalienceEvents {
                 if (effect.getEffect().getCategory() == MobEffectCategory.HARMFUL && !effect.isInfiniteDuration()) {
                     player.removeEffect(effect.getEffect());
                     state.dairyCleanseCooldown = 90 * 20;
+                    activation(player, AspectIdentity.RENEWAL, "Renewal cleansed " + effect.getEffect().getDisplayName().getString(), SoundEvents.AMETHYST_BLOCK_RESONATE);
                     break;
                 }
             }
@@ -267,8 +331,77 @@ public final class SalienceEvents {
         if (player.getFoodData().getFoodLevel() <= 2 || ThirstCompat.isLow(player) || EpicFightCompat.isStaminaBelow(player, 0.10)) {
             state.enduranceReserveTicks = 5 * 20;
             state.enduranceReserveCooldown = 2 * 60 * 20;
+            activation(player, AspectIdentity.ENDURANCE, "Deep Reserve", SoundEvents.PLAYER_LEVELUP);
         }
     }
+
+    private static void finishMealFeedback(ServerPlayer player, MetabolicState state, ConsumptionStart start) {
+        NutritionSnapshot current = DietBridge.snapshot(player);
+        PresentationSnapshot presentation = PresentationSnapshot.create(player, current, state);
+        int changedMask = 0;
+        NutritionTier highestCrossing = null;
+        for (int index = 0; index < GROUPS.length; index++) {
+            float before = start.nutrition().actual(GROUPS[index]);
+            float after = current.actual(GROUPS[index]);
+            if (after > before + .001f) changedMask |= 1 << index;
+            NutritionTier oldTier = NutritionTier.of(before, ordinary(), prepared(), feast());
+            NutritionTier newTier = NutritionTier.of(after, ordinary(), prepared(), feast());
+            if (newTier.ordinal() > oldTier.ordinal()) {
+                highestCrossing = highestCrossing == null || newTier.ordinal() > highestCrossing.ordinal() ? newTier : highestCrossing;
+                particles(player, NUTRIENT_ASPECTS[index], player.getX(), player.getY() + 1.0, player.getZ(), 5 + newTier.ordinal() * 2);
+            }
+        }
+        if (highestCrossing != null) {
+            float pitch = .9f + highestCrossing.ordinal() * .15f;
+            player.level().playSound(null, player.blockPosition(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, .5f, pitch);
+        }
+        boolean sugarChanged = state.sugar > start.sugar() + .001;
+        boolean alcoholChanged = state.alcohol > start.alcohol() + .001;
+        if (changedMask == 0 && !sugarChanged && !alcoholChanged) return;
+        int[] seconds = presentation.nutrientSeconds();
+        SalienceNetwork.meal(player, new MealFeedbackPacket(changedMask,
+                new float[]{current.proteins(), current.grains(), current.fruits(), current.fats(), current.vegetables(), current.dairy()},
+                seconds, sugarChanged, alcoholChanged, (float) state.sugar, (float) state.debt, (float) state.alcohol,
+                presentation.sugarSeconds(), presentation.debtSeconds(), presentation.alcoholSeconds()));
+        SalienceNetwork.sync(player, current, state);
+    }
+
+    private static boolean updatePresentationFeedback(ServerPlayer player, MetabolicState state, int flags) {
+        int previous = state.lastPresentationFlags;
+        state.lastPresentationFlags = flags;
+        if (previous < 0) return true;
+        if (!PresentationFlags.has(previous, PresentationFlags.MOBILITY_STRIDE)
+                && PresentationFlags.has(flags, PresentationFlags.MOBILITY_STRIDE)) {
+            activation(player, AspectIdentity.MOBILITY, "Stride", SoundEvents.HORSE_GALLOP);
+        }
+        if (!PresentationFlags.has(previous, PresentationFlags.TEMPO_CRASH)
+                && PresentationFlags.has(flags, PresentationFlags.TEMPO_CRASH)) {
+            activation(player, AspectIdentity.TEMPO, "Sugar crash", SoundEvents.GENERIC_EXTINGUISH_FIRE);
+        }
+        return previous != flags;
+    }
+
+    private static void activation(ServerPlayer player, AspectIdentity aspect, String label, net.minecraft.sounds.SoundEvent sound) {
+        action(player, aspect, label);
+        particles(player, aspect, player.getX(), player.getY() + 1.0, player.getZ(), 9);
+        player.level().playSound(null, player.blockPosition(), sound, SoundSource.PLAYERS, .55f, 1.1f);
+    }
+
+    private static void action(ServerPlayer player, AspectIdentity aspect, String label) {
+        player.displayClientMessage(Component.literal(aspect.glyph + " " + label)
+                .withStyle(style -> style.withColor(aspect.color)), true);
+    }
+
+    private static void particles(ServerPlayer player, AspectIdentity aspect, double x, double y, double z, int count) {
+        float red = ((aspect.color >> 16) & 255) / 255.0f;
+        float green = ((aspect.color >> 8) & 255) / 255.0f;
+        float blue = (aspect.color & 255) / 255.0f;
+        player.serverLevel().sendParticles(new DustParticleOptions(new Vector3f(red, green, blue), .85f),
+                x, y, z, count, .28, .35, .28, .02);
+    }
+
+    private record ConsumptionStart(NutritionSnapshot nutrition, double sugar, double debt, double alcohol) {}
+    private record PendingMeal(ConsumptionStart start, long dueTick) {}
 
     private static double ordinary() { return SalienceConfig.ORDINARY_THRESHOLD.get(); }
     private static double prepared() { return SalienceConfig.PREPARED_THRESHOLD.get(); }

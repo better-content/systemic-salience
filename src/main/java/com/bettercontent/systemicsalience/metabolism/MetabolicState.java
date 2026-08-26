@@ -20,6 +20,7 @@ public final class MetabolicState {
     public int workSequence;
     public long lastBreakTick = -100L;
     public long lastAttackTick = -100L;
+    public transient int lastPresentationFlags = -1;
 
     public void tickTransient() {
         sugar = MetabolicMath.tickSugar(sugar);
