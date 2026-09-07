@@ -2,6 +2,7 @@ package com.bettercontent.systemicsalience.presentation;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -26,6 +27,8 @@ final class NutritionPresentationTest {
         assertEquals(8, AspectIdentity.values().length);
         assertEquals(AspectIdentity.IMPACT, AspectIdentity.fromGroupName("diet:PROTEINS"));
         assertEquals(AspectIdentity.RENEWAL, AspectIdentity.fromGroupName("Dairy"));
+        assertArrayEquals(new int[]{0xFF4055, 0x00A985, 0xF0E2C5, 0xE0B01F, 0x52606A, 0xAF6A2F, 0x6CCAF0, 0x8E5BB7},
+                java.util.Arrays.stream(AspectIdentity.values()).mapToInt(aspect -> aspect.color).toArray());
         for (int index = 0; index < AspectIdentity.values().length; index++) {
             assertEquals(index, AspectIdentity.values()[index].icon);
         }

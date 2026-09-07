@@ -12,7 +12,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 final class IdentityAssetContractTest {
-    private static final String BADGE_HASH = "b59717a5da26f633cd120f09b750c15875577ec9c74a8c7838c32aea8ee5eeed";
+    private static final String BADGE_HASH = "84bc0c5fe762fe2df5f1ed53a2e138ecb03bbfbb386657039ad8333927bf51ab";
     private static final Map<String, String> MOTIF_HASHES = Map.of(
             "impact", "1371c31e65d10a4b9aff832bc0106ca97c6f81ff81b85b48f3355be864622da3",
             "tempo", "d06478a8c71c6b77fae7118b8f2ec9b87142b87b7b83717366c0d2dfa025ee87",
@@ -30,6 +30,14 @@ final class IdentityAssetContractTest {
         assertEquals(BADGE_HASH, HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes)));
         var image = ImageIO.read(new java.io.ByteArrayInputStream(bytes));
         assertEquals(144, image.getWidth()); assertEquals(18, image.getHeight());
+        for (AspectIdentity aspect : AspectIdentity.values()) {
+            boolean containsAnchor = false;
+            for (int y = 0; y < 18; y++) for (int x = aspect.icon * 18; x < (aspect.icon + 1) * 18; x++) {
+                if ((image.getRGB(x, y) & 0xffffff) == aspect.color) containsAnchor = true;
+            }
+            assertTrue(containsAnchor, aspect.displayName + " badge must contain its canonical anchor color");
+            assertFalse(aspect.badge().chars().anyMatch(Character::isWhitespace));
+        }
         String font = new String(resource("/assets/systemic_salience/font/aspects.json").readAllBytes(), StandardCharsets.UTF_8);
         assertTrue(font.contains(""));
     }

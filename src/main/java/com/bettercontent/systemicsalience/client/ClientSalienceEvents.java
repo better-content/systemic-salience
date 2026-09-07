@@ -83,7 +83,8 @@ public final class ClientSalienceEvents {
             String name = identity == AspectIdentity.TEMPO ? "Sugar" : identity == AspectIdentity.CONTROL ? "Alcohol"
                     : identity.representative.substring(0, 1).toUpperCase() + identity.representative.substring(1);
             line.append(Component.literal(name + " — ").withStyle(style -> style.withColor(identity.color)))
-                    .append(Component.literal(identity.badge() + " ").withStyle(style -> style.withFont(ASPECT_FONT)))
+                    .append(Component.literal(identity.badge()).withStyle(style -> style.withFont(ASPECT_FONT)))
+                    .append(Component.literal(" "))
                     .append(Component.literal(identity.glyph + " " + identity.displayName)
                             .withStyle(style -> style.withColor(identity.color)));
         }

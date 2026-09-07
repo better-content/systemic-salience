@@ -5,14 +5,14 @@ import java.util.Comparator;
 import java.util.Locale;
 
 public enum AspectIdentity {
-    IMPACT(0, "proteins", "✦", "Impact", 0xE4717D),
-    TEMPO(1, "sugar", "»", "Tempo", 0xAA652B),
-    WORK(2, "grains", "⚒", "Work", 0xCAA903),
-    MOBILITY(3, "fruits", "➜", "Mobility", 0xC0E304),
-    ENDURANCE(4, "fats", "∞", "Endurance", 0x35BBD0),
-    ROBUSTNESS(5, "vegetables", "◆", "Robustness", 0x1175FC),
-    RENEWAL(6, "dairy", "✚", "Renewal", 0x6FEDBA),
-    CONTROL(7, "alcohol", "⊕", "Control", 0x8A6CB2);
+    IMPACT(0, "proteins", "✦", "Impact", 0xFF4055),
+    TEMPO(1, "sugar", "»", "Tempo", 0x00A985),
+    WORK(2, "grains", "⚒", "Work", 0xF0E2C5),
+    MOBILITY(3, "fruits", "➜", "Mobility", 0xE0B01F),
+    ENDURANCE(4, "fats", "∞", "Endurance", 0x52606A),
+    ROBUSTNESS(5, "vegetables", "◆", "Robustness", 0xAF6A2F),
+    RENEWAL(6, "dairy", "✚", "Renewal", 0x6CCAF0),
+    CONTROL(7, "alcohol", "⊕", "Control", 0x8E5BB7);
 
     public final int icon;
     public final String representative;

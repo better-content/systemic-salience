@@ -86,7 +86,8 @@ public final class MealRecap {
 
     private record Entry(AspectIdentity aspect, NutritionTier tier, float value, int seconds, State state) {
         MutableComponent component() {
-            MutableComponent result = Component.literal(aspect.badge() + " ").withStyle(style -> style.withFont(ASPECT_FONT))
+            MutableComponent result = Component.literal(aspect.badge()).withStyle(style -> style.withFont(ASPECT_FONT))
+                    .append(Component.literal(" ").withStyle(style -> style.withFont(DEFAULT_FONT)))
                     .append(Component.literal(aspect.glyph + " " + label())
                             .withStyle(style -> style.withFont(DEFAULT_FONT).withColor(aspect.color)));
             String time = duration(seconds);
@@ -99,7 +100,7 @@ public final class MealRecap {
             return switch (state) {
                 case NUTRIENT -> aspect.representative.substring(0, 1).toUpperCase() + aspect.representative.substring(1)
                         + " — " + aspect.glyph + " " + aspect.displayName + " — "
-                        + (tier == NutritionTier.BUILDING ? "Building · " + Math.round(value * 100) + "%"
+                        + (tier == NutritionTier.BUILDING ? "Undernourished · " + Math.round(value * 100) + "%"
                         : tier.name().substring(0, 1) + tier.name().substring(1).toLowerCase());
                 case SUGAR_ONE -> "Sugar — » Tempo I · nutrition burns 2×";
                 case SUGAR_TWO -> "Sugar — » Tempo II · nutrition burns 5×";

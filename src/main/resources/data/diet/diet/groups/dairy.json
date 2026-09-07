@@ -1,6 +1,6 @@
 {
   "icon": "minecraft:milk_bucket",
-  "color": "#6FEDBA",
+  "color": "#6CCAF0",
   "order": 5,
   "default_value": 0.0,
   "gain_multiplier": 1.0,
