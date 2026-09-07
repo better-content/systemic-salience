@@ -7,6 +7,12 @@ Fruits are Mobility, Fats are Endurance, Vegetables are Robustness, and Dairy is
 Sugar expresses Tempo by amplifying and spending the state already built; Alcohol expresses
 Control through its useful midpoint and independently rising impairment.
 
+Opening Diet now shows one integrated, responsive screen instead of a detached side panel. The
+screen keeps Diet's ordinary group values and navigation while presenting Systemic Salience's
+thresholds, readiness identities, sugar/debt, and alcohol load together. Values below Supported
+are labeled **Undernourished**. Labels, icons, threshold ticks, and bar positions duplicate color
+meaning, and the layout fits the pack default GUI scale without hiding an ordinary group.
+
 The eight identities use short physical-foley gestures with a quiet one-second room decay.
 Nutrition, RPG allocation, and Matter use related contextual renders rather than identical
 files. Sugar crash deliberately receives a broken Tempo gesture. The reproducible renderer,
