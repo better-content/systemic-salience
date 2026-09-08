@@ -15,6 +15,7 @@ import com.bettercontent.systemicsalience.network.SalienceNetwork;
 import com.bettercontent.systemicsalience.network.MealFeedbackPacket;
 import com.bettercontent.systemicsalience.nutrition.DietBridge;
 import com.bettercontent.systemicsalience.nutrition.NutritionSnapshot;
+import com.bettercontent.systemicsalience.nutrition.NutritionThreadBoundary;
 import com.bettercontent.systemicsalience.presentation.AspectIdentity;
 import com.bettercontent.systemicsalience.presentation.NutritionTier;
 import com.bettercontent.systemicsalience.presentation.ModSounds;
@@ -106,9 +107,13 @@ public final class SalienceEvents {
         if (player.tickCount % 20 == 0) {
             double extraDepletion = DietBridge.applyCustomDecay(player, state);
             state.addDebt(2.0 * extraDepletion);
+            NutritionSnapshot authoritativeNutrition = DietBridge.snapshot(player);
+            if (DietBridge.tracker(player).isPresent()) {
+                NutritionThreadBoundary.onAuthoritativeTick(player, authoritativeNutrition, ordinary());
+            }
             BrewingCompat.suppressNumbedHearts(player);
             MetabolicStateStore.save(player);
-            SalienceNetwork.sync(player, DietBridge.snapshot(player), state);
+            SalienceNetwork.sync(player, authoritativeNutrition, state);
         } else if (presentationChanged) {
             SalienceNetwork.sync(player, nutrition, state);
         }
@@ -151,7 +156,8 @@ public final class SalienceEvents {
         if (stack.isEdible() || ConsumableProfiles.sugar(stack) > 0.0 || ConsumableProfiles.isAlcohol(stack)
                 || stack.is(net.minecraft.world.item.Items.MILK_BUCKET)) {
             MetabolicState state = MetabolicStateStore.get(player);
-            CONSUMPTION_STARTS.put(player.getUUID(), new ConsumptionStart(DietBridge.snapshot(player), state.sugar, state.debt, state.alcohol));
+            CONSUMPTION_STARTS.put(player.getUUID(), new ConsumptionStart(
+                    DietBridge.snapshot(player), state.sugar, state.debt, state.alcohol, stack.isEdible()));
         }
         if (stack.is(net.minecraft.world.item.Items.MILK_BUCKET)
                 && DietBridge.snapshot(player).actual(NutritionSnapshot.Group.DAIRY) >= prepared()) {
@@ -335,6 +341,9 @@ public final class SalienceEvents {
 
     private static void finishMealFeedback(ServerPlayer player, MetabolicState state, ConsumptionStart start) {
         NutritionSnapshot current = DietBridge.snapshot(player);
+        if (start.edible() && DietBridge.tracker(player).isPresent()) {
+            NutritionThreadBoundary.onMealSettled(player, start.nutrition(), current, ordinary());
+        }
         PresentationSnapshot presentation = PresentationSnapshot.create(player, current, state);
         int changedMask = 0;
         NutritionTier highestCrossing = null;
@@ -444,7 +453,8 @@ public final class SalienceEvents {
         }
     }
 
-    private record ConsumptionStart(NutritionSnapshot nutrition, double sugar, double debt, double alcohol) {}
+    private record ConsumptionStart(NutritionSnapshot nutrition, double sugar, double debt, double alcohol,
+                                    boolean edible) {}
     private record PendingMeal(ConsumptionStart start, long dueTick) {}
 
     private static double ordinary() { return SalienceConfig.ORDINARY_THRESHOLD.get(); }

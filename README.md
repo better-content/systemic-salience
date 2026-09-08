@@ -2,6 +2,8 @@
 
 Systemic Salience is the deliberately thin Better Content integration layer for dynamic bodily state. Diet remains the owner of ordinary nutrient values; Brewin' and Chewin', Thirst Was Taken, Cold Sweat, Epic Fight, and vanilla remain the owners of their mechanics. This mod supplies the state and compatibility hooks needed for superlinear nutrition, sugar loading and debt, inverted-U alcohol, threshold interactions, and a unified Diet-screen readout.
 
+On the server, Systemic Salience also owns the authoritative hunger-versus-nutrition episode boundary. A full hunger bar with any ordinary Diet group below the configured ordinary threshold starts one persisted episode; a completed edible use that brings all six groups to that threshold after Diet's update ends it. When Better Content Threads is installed, those transitions are emitted through its public reflection API with one correlation token.
+
 Each ordinary food group owns one behavioral identity: Proteins are Impact, Grains are Work,
 Fruits are Mobility, Fats are Endurance, Vegetables are Robustness, and Dairy is Renewal.
 Sugar expresses Tempo by amplifying and spending the state already built; Alcohol expresses
