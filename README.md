@@ -1,6 +1,6 @@
 # Systemic Salience
 
-Systemic Salience is the deliberately thin Better Content integration layer for dynamic bodily state. Diet remains the owner of ordinary nutrient values; Brewin' and Chewin', Thirst Was Taken, Cold Sweat, Epic Fight, and vanilla remain the owners of their mechanics. This mod supplies the state and compatibility hooks needed for superlinear nutrition, sugar loading and debt, inverted-U alcohol, threshold interactions, and a unified Diet-screen readout.
+Systemic Salience is the deliberately thin Better Content integration layer for dynamic bodily state. Diet remains the owner of ordinary nutrient values and its native screen; Brewin' and Chewin', Thirst Was Taken, Cold Sweat, Epic Fight, and vanilla remain the owners of their mechanics. This mod supplies the state and compatibility hooks needed for superlinear nutrition, sugar loading and debt, inverted-U alcohol, and threshold interactions.
 
 On the server, Systemic Salience also owns the authoritative hunger-versus-nutrition episode boundary. A full hunger bar with any ordinary Diet group below the configured ordinary threshold starts one persisted episode; a completed edible use that brings all six groups to that threshold after Diet's update ends it. When Better Content Threads is installed, those transitions are emitted through its public reflection API with one correlation token.
 
@@ -9,11 +9,9 @@ Fruits are Mobility, Fats are Endurance, Vegetables are Robustness, and Dairy is
 Sugar expresses Tempo by amplifying and spending the state already built; Alcohol expresses
 Control through its useful midpoint and independently rising impairment.
 
-Opening Diet now shows one integrated, responsive screen instead of a detached side panel. The
-screen keeps Diet's ordinary group values and navigation while presenting Systemic Salience's
-thresholds, readiness identities, sugar/debt, and alcohol load together. Values below Supported
-are labeled **Undernourished**. Labels, icons, threshold ticks, and bar positions duplicate color
-meaning, and the layout fits the pack default GUI scale without hiding an ordinary group.
+Opening Diet uses Diet's native screen and navigation. Systemic Salience no longer replaces that
+screen or adds a separate metabolism panel; its gameplay effects and contextual feedback continue
+to operate independently.
 
 The eight identities use short physical-foley gestures with a quiet one-second room decay.
 Nutrition, RPG allocation, and Matter use related contextual renders rather than identical

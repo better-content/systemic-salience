@@ -4,7 +4,8 @@ import com.bettercontent.systemicsalience.config.SalienceConfig;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import javax.imageio.ImageIO;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -12,18 +13,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SystemicSalienceContractTest {
     @Test
-    void allEightNutritionIdentitiesArePresentedCategorically() throws IOException {
-        String language;
-        try (var stream = getClass().getResourceAsStream("/assets/systemic_salience/lang/en_us.json")) {
-            assertTrue(stream != null);
-            language = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
-        }
-        for (String group : new String[]{"Fruits", "Grains", "Proteins", "Fats", "Vegetables", "Dairy", "Sugar", "Alcohol"}) {
-            assertTrue(language.contains(group), group);
-        }
-        assertTrue(language.contains("Alcohol · best near center"));
-        assertTrue(language.contains("Composure"));
-        assertTrue(language.contains("Impairment"));
+    void dietKeepsItsNativeScreen() throws IOException {
+        Path clientRoot = Path.of("src/main/java/com/bettercontent/systemicsalience/client");
+        String stateEvents = Files.readString(clientRoot.resolve("ClientStateEvents.java"));
+
+        assertFalse(Files.exists(clientRoot.resolve("SystemicDietScreen.java")));
+        assertFalse(Files.exists(clientRoot.resolve("DietScreenEvents.java")));
+        assertFalse(stateEvents.contains("ScreenEvent.Opening"));
+        assertFalse(stateEvents.contains("setNewScreen"));
     }
 
     @Test
