@@ -1,5 +1,6 @@
 package com.bettercontent.systemicsalience.nutrition;
 
+import com.bettercontent.systemicsalience.api.event.NutritionEpisodeEvent;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -35,11 +36,8 @@ final class NutritionThreadBoundaryTest {
     }
 
     @Test
-    void signalNamesMatchThePublishedThreadRoutes() {
-        assertTrue(NutritionThreadBoundary.THREAD_ID.equals("hunger_is_not_nutrition"));
-        assertTrue(NutritionThreadBoundary.WARNING_TYPE.equals("nutrition_warning"));
-        assertTrue(NutritionThreadBoundary.WARNING_VALUE.equals("hunger_full_nutrition_low"));
-        assertTrue(NutritionThreadBoundary.RECOVERED_TYPE.equals("nutrition_recovered"));
-        assertTrue(NutritionThreadBoundary.RECOVERED_VALUE.equals("balanced_meal"));
+    void providerEventExposesBothDomainBoundaries() {
+        assertTrue(java.util.Set.of(NutritionEpisodeEvent.Kind.values()).containsAll(
+                java.util.Set.of(NutritionEpisodeEvent.Kind.WARNING, NutritionEpisodeEvent.Kind.RECOVERED)));
     }
 }

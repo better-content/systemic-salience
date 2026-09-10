@@ -7,11 +7,13 @@ public final class MetabolicState {
     private static final String DEBT = "debt";
     private static final String ALCOHOL = "alcohol";
     private static final String NUTRITION_THREAD_TOKEN = "nutrition_thread_token";
+    private static final String NUTRITION_WARNING_PUBLISHED = "nutrition_warning_published";
 
     public double sugar;
     public double debt;
     public double alcohol;
     public String nutritionThreadToken = "";
+    public boolean nutritionWarningPublished;
 
     public int heavyBlowCooldown;
     public int enduranceReserveCooldown;
@@ -53,6 +55,7 @@ public final class MetabolicState {
         tag.putDouble(DEBT, debt);
         tag.putDouble(ALCOHOL, alcohol);
         if (validToken(nutritionThreadToken)) tag.putString(NUTRITION_THREAD_TOKEN, nutritionThreadToken);
+        tag.putBoolean(NUTRITION_WARNING_PUBLISHED, nutritionWarningPublished);
         tag.putInt("heavy_blow_cd", heavyBlowCooldown);
         tag.putInt("endurance_reserve_cd", enduranceReserveCooldown);
         tag.putInt("weathered_cd", weatheredCooldown);
@@ -67,6 +70,8 @@ public final class MetabolicState {
         state.alcohol = MetabolicMath.clamp01(tag.getDouble(ALCOHOL));
         String nutritionThreadToken = tag.getString(NUTRITION_THREAD_TOKEN);
         state.nutritionThreadToken = validToken(nutritionThreadToken) ? nutritionThreadToken : "";
+        state.nutritionWarningPublished = !state.nutritionThreadToken.isBlank()
+                && tag.getBoolean(NUTRITION_WARNING_PUBLISHED);
         state.heavyBlowCooldown = nonnegative(tag.getInt("heavy_blow_cd"));
         state.enduranceReserveCooldown = nonnegative(tag.getInt("endurance_reserve_cd"));
         state.weatheredCooldown = nonnegative(tag.getInt("weathered_cd"));
