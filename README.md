@@ -11,7 +11,9 @@ Control through its useful midpoint and independently rising impairment.
 
 Opening Diet uses Diet's native screen and navigation. Systemic Salience no longer replaces that
 screen or adds a separate metabolism panel; its gameplay effects and contextual feedback continue
-to operate independently.
+to operate independently. Meal recaps use bright, wrapped food-group labels, retain the aspect
+badge, and remain visible for four to ten seconds according to their size. Opening a screen
+or hiding the HUD pauses their timer so the explanation is available when play resumes.
 
 The eight identities use short physical-foley gestures with a quiet one-second room decay.
 Nutrition, RPG allocation, and Matter use related contextual renders rather than identical

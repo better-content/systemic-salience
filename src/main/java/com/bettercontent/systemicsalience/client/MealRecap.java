@@ -18,7 +18,7 @@ public final class MealRecap {
     private static final net.minecraft.resources.ResourceLocation DEFAULT_FONT =
             new net.minecraft.resources.ResourceLocation("minecraft", "default");
     private static final int SETTLE_TICKS = 25;
-    private static final int DISPLAY_TICKS = 80;
+    private static final int MINIMUM_DISPLAY_TICKS = 80;
     private static final Map<AspectIdentity, Entry> ENTRIES = new LinkedHashMap<>();
     private static int settle;
     private static int display;
@@ -50,27 +50,32 @@ public final class MealRecap {
     }
 
     public static void tick() {
+        var minecraft = Minecraft.getInstance();
+        if (minecraft.screen != null || minecraft.options.hideGui || minecraft.player == null) return;
         if (settle > 0) {
-            if (--settle == 0) display = DISPLAY_TICKS;
+            if (--settle == 0) display = Math.min(200, Math.max(MINIMUM_DISPLAY_TICKS, 40 + ENTRIES.size() * 20));
         } else if (display > 0 && --display == 0) ENTRIES.clear();
     }
 
     public static void render(GuiGraphics graphics, Minecraft minecraft, int anchorY) {
-        if (settle > 0 || display <= 0 || ENTRIES.isEmpty()) return;
+        if (minecraft.screen != null || minecraft.options.hideGui || settle > 0 || display <= 0 || ENTRIES.isEmpty()) return;
         int fadeTicks = 30;
         float opacity = display < fadeTicks ? display / (float) fadeTicks : 1.0f;
         int rise = display < fadeTicks ? Math.round((1.0f - opacity) * 10.0f) : 0;
-        int lineHeight = 10;
-        int width = ENTRIES.values().stream().map(Entry::component).mapToInt(component -> minecraft.font.width(component)).max().orElse(80) + 12;
-        int height = ENTRIES.size() * lineHeight + 8;
+        int lineHeight = 11;
+        int textWidth = Math.max(1, graphics.guiWidth() - 36);
+        var lines = ENTRIES.values().stream().flatMap(entry -> minecraft.font.split(entry.component(), textWidth).stream()).toList();
+        int width = Math.min(graphics.guiWidth() - 24,
+                ENTRIES.values().stream().map(Entry::component).mapToInt(component -> minecraft.font.width(component)).max().orElse(80) + 12);
+        int height = lines.size() * lineHeight + 8;
         int x = (graphics.guiWidth() - width) / 2;
-        int y = anchorY - height - 7 - rise;
-        int alpha = Math.max(4, Math.round(176 * opacity));
+        int y = Math.max(8, anchorY - height - 7 - rise);
+        int alpha = Math.max(4, Math.round(224 * opacity));
         graphics.fill(x, y, x + width, y + height, alpha << 24 | 0x101216);
         int textAlpha = Math.max(4, Math.round(255 * opacity)) << 24;
         int rowY = y + 4;
-        for (Entry entry : ENTRIES.values()) {
-            graphics.drawString(minecraft.font, entry.component(), x + 6, rowY, textAlpha | 0xffffff, false);
+        for (var line : lines) {
+            graphics.drawString(minecraft.font, line, x + 6, rowY, textAlpha | 0xffffff, false);
             rowY += lineHeight;
         }
     }
@@ -89,7 +94,7 @@ public final class MealRecap {
             MutableComponent result = Component.literal(aspect.badge()).withStyle(style -> style.withFont(ASPECT_FONT))
                     .append(Component.literal(" ").withStyle(style -> style.withFont(DEFAULT_FONT)))
                     .append(Component.literal(aspect.glyph + " " + label())
-                            .withStyle(style -> style.withFont(DEFAULT_FONT).withColor(aspect.color)));
+                            .withStyle(style -> style.withFont(DEFAULT_FONT).withColor(0xeee8d8)));
             String time = duration(seconds);
             if (!time.isEmpty()) result.append(Component.literal(" · " + time)
                     .withStyle(style -> style.withFont(DEFAULT_FONT).withColor(0xaaaaaa)));
@@ -99,7 +104,7 @@ public final class MealRecap {
         String label() {
             return switch (state) {
                 case NUTRIENT -> aspect.representative.substring(0, 1).toUpperCase() + aspect.representative.substring(1)
-                        + " — " + aspect.glyph + " " + aspect.displayName + " — "
+                        + " — "
                         + (tier == NutritionTier.BUILDING ? "Undernourished · " + Math.round(value * 100) + "%"
                         : tier.name().substring(0, 1) + tier.name().substring(1).toLowerCase());
                 case SUGAR_ONE -> "Sugar — » Tempo I · nutrition burns 2×";
