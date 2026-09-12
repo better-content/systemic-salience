@@ -73,9 +73,14 @@ public final class EpicFightCompat {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static void applyImpact(LivingEntity target, double amount) {
-        if (!ModList.get().isLoaded("epicfight") || amount <= 0.0) return;
+        tryImpact(target, amount);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static boolean tryImpact(LivingEntity target, double amount) {
+        if (!ModList.get().isLoaded("epicfight") || amount <= 0.0) return false;
         HurtableEntityPatch patch = EpicFightCapabilities.getEntityPatch(target, HurtableEntityPatch.class);
-        if (patch != null) patch.applyStun(StunType.SHORT, (float) amount);
+        return patch != null && patch.applyStun(StunType.SHORT, (float) amount);
     }
 
     public static void braceStunShield(ServerPlayer player) {

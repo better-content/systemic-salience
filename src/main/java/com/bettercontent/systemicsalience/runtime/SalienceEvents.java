@@ -143,6 +143,7 @@ public final class SalienceEvents {
         state.workSequence = state.lastBreakTick >= now - 60L ? Math.min(5, state.workSequence + 1) : 1;
         state.lastBreakTick = now;
         if (previous < 5 && state.workSequence == 5) {
+            metabolicDiscovery(player, com.bettercontent.systemicsalience.api.event.MetabolicDiscoveryEvent.Kind.WORK_RHYTHM, "Work Rhythm reached five successive valid breaks");
             cueAt(player, AspectIdentity.WORK, "Work Rhythm ×5", event.getPos().getX() + .5,
                     event.getPos().getY() + .7, event.getPos().getZ() + .5, 10);
         }
@@ -206,16 +207,20 @@ public final class SalienceEvents {
         long now = player.level().getGameTime();
         boolean heavy = proteins >= feast() && state.heavyBlowCooldown == 0
                 && now - state.lastAttackTick >= 80L && player.getAttackStrengthScale(0.5f) >= 0.90f;
+        var motionBefore = target.getDeltaMovement();
+        boolean impactApplied = false;
         if (heavy) {
             force += 1.0;
             state.heavyBlowCooldown = 8 * 20;
-            EpicFightCompat.applyImpact(target, 1.0);
+            impactApplied = EpicFightCompat.tryImpact(target, 1.0);
             cueAt(player, AspectIdentity.IMPACT, "Heavy Blow", target.getX(),
                     target.getY() + target.getBbHeight() * .6, target.getZ(), 14);
         } else if (force > 0.0) {
             EpicFightCompat.applyImpact(target, force);
         }
         if (force > 0.0) target.knockback(force, player.getX() - target.getX(), player.getZ() - target.getZ());
+        if (heavy && (impactApplied || !motionBefore.equals(target.getDeltaMovement())))
+            metabolicDiscovery(player, com.bettercontent.systemicsalience.api.event.MetabolicDiscoveryEvent.Kind.HEAVY_BLOW, target.getName().getString());
         state.lastAttackTick = now;
     }
 
@@ -314,7 +319,8 @@ public final class SalienceEvents {
         if (dairy >= feast() && state.dairyCleanseCooldown == 0) {
             for (MobEffectInstance effect : new ArrayList<>(player.getActiveEffects())) {
                 if (effect.getEffect().getCategory() == MobEffectCategory.HARMFUL && !effect.isInfiniteDuration()) {
-                    player.removeEffect(effect.getEffect());
+                    if (player.removeEffect(effect.getEffect()))
+                        metabolicDiscovery(player, com.bettercontent.systemicsalience.api.event.MetabolicDiscoveryEvent.Kind.CLEANSE, effect.getEffect().getDisplayName().getString());
                     state.dairyCleanseCooldown = 90 * 20;
                     activation(player, AspectIdentity.RENEWAL, "Cleansed " + effect.getEffect().getDisplayName().getString());
                     break;
@@ -336,6 +342,7 @@ public final class SalienceEvents {
             state.enduranceReserveTicks = 5 * 20;
             state.enduranceReserveCooldown = 2 * 60 * 20;
             activation(player, AspectIdentity.ENDURANCE, "Deep Reserve");
+            metabolicDiscovery(player, com.bettercontent.systemicsalience.api.event.MetabolicDiscoveryEvent.Kind.DEEP_RESERVE, "A nutritional reserve activated during resource depletion");
         }
     }
 
@@ -385,10 +392,15 @@ public final class SalienceEvents {
         if (!PresentationFlags.has(previous, PresentationFlags.TEMPO_CRASH)
                 && PresentationFlags.has(flags, PresentationFlags.TEMPO_CRASH)) {
             action(player, AspectIdentity.TEMPO, "Sugar crash");
+            metabolicDiscovery(player, com.bettercontent.systemicsalience.api.event.MetabolicDiscoveryEvent.Kind.SUGAR_CRASH, "Sugar crash");
             particles(player, AspectIdentity.TEMPO, player.getX(), player.getY() + 1.0, player.getZ(), 9);
             player.level().playSound(null, player.blockPosition(), ModSounds.brokenTempo(), SoundSource.PLAYERS, .48f, 1.0f);
         }
         return previous != flags;
+    }
+
+    private static void metabolicDiscovery(ServerPlayer player, com.bettercontent.systemicsalience.api.event.MetabolicDiscoveryEvent.Kind kind, String detail) {
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new com.bettercontent.systemicsalience.api.event.MetabolicDiscoveryEvent(player, kind, detail));
     }
 
     private static void activation(ServerPlayer player, AspectIdentity aspect, String label) {
