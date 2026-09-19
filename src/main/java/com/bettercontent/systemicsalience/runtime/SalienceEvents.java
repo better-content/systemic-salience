@@ -21,7 +21,6 @@ import com.bettercontent.systemicsalience.presentation.NutritionTier;
 import com.bettercontent.systemicsalience.presentation.ModSounds;
 import com.bettercontent.systemicsalience.presentation.PresentationFlags;
 import com.bettercontent.systemicsalience.presentation.PresentationSnapshot;
-import com.illusivesoulworks.diet.api.DietEvent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.network.chat.Component;
@@ -64,7 +63,7 @@ public final class SalienceEvents {
     private static final UUID ALCOHOL_ATTACK_TIMING = UUID.fromString("fb8c17f4-59c7-4cb4-b6e9-c31316286787");
     private static final UUID ALCOHOL_RECOIL = UUID.fromString("6b26319b-81c4-4b3e-8dd6-d2586fd23467");
     private static final UUID ALCOHOL_DISPERSION = UUID.fromString("219ddb4f-3df3-43c6-828c-f1bf7aff5bb8");
-    private static final Map<UUID, List<MobEffectInstance>> PRESERVED_MILK_EFFECTS = new HashMap<>();
+    private static final Map<UUID, PreservedMilkEffects> PRESERVED_MILK_EFFECTS = new HashMap<>();
     private static final Map<UUID, ConsumptionStart> CONSUMPTION_STARTS = new HashMap<>();
     private static final Map<UUID, PendingMeal> PENDING_MEALS = new HashMap<>();
     private static final NutritionSnapshot.Group[] GROUPS = NutritionSnapshot.Group.values();
@@ -74,12 +73,6 @@ public final class SalienceEvents {
     };
 
     private SalienceEvents() {}
-
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void disableDietDecay(DietEvent.ApplyDecay event) { event.setCanceled(true); }
-
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void disableDietEffects(DietEvent.ApplyEffect event) { event.setCanceled(true); }
 
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
@@ -105,8 +98,8 @@ public final class SalienceEvents {
         boolean presentationChanged = updatePresentationFeedback(player, state, presentation.flags());
 
         if (player.tickCount % 20 == 0) {
-            double extraDepletion = DietBridge.applyCustomDecay(player, state);
-            state.addDebt(2.0 * extraDepletion);
+            // Diet owns decay, values, effects and tracker persistence. Salience only reads its
+            // settled snapshot for aspect abilities, optional sugar/alcohol cues, and Threads.
             NutritionSnapshot authoritativeNutrition = DietBridge.snapshot(player);
             if (DietBridge.tracker(player).isPresent()) {
                 NutritionThreadBoundary.onAuthoritativeTick(player, authoritativeNutrition, ordinary());
@@ -166,7 +159,7 @@ public final class SalienceEvents {
                     .filter(effect -> effect.getEffect().isBeneficial())
                     .map(MobEffectInstance::new)
                     .toList();
-            PRESERVED_MILK_EFFECTS.put(player.getUUID(), beneficial);
+            PRESERVED_MILK_EFFECTS.put(player.getUUID(), new PreservedMilkEffects(beneficial, player.level().getGameTime()));
         }
     }
 
@@ -188,10 +181,19 @@ public final class SalienceEvents {
             ThirstCompat.addExhaustion(player, (float) (2.0 * alcohol));
         }
         if (stack.is(net.minecraft.world.item.Items.MILK_BUCKET)) {
-            List<MobEffectInstance> preserved = PRESERVED_MILK_EFFECTS.remove(player.getUUID());
+            PreservedMilkEffects preserved = PRESERVED_MILK_EFFECTS.remove(player.getUUID());
             if (preserved != null) {
-                preserved.forEach(player::addEffect);
-                activation(player, AspectIdentity.RENEWAL, "Benefits preserved");
+                long elapsed = Math.max(0L, player.level().getGameTime() - preserved.startedAt());
+                boolean restored = false;
+                for (MobEffectInstance snapshot : preserved.effects()) {
+                    int remaining = Math.max(0, snapshot.getDuration() - (int) Math.min(Integer.MAX_VALUE, elapsed));
+                    if (remaining <= 0 || player.hasEffect(snapshot.getEffect())) continue;
+                    MobEffectInstance exact = new MobEffectInstance(snapshot);
+                    ((MobEffectInstanceAccessor) exact).systemicSalience$setDuration(remaining);
+                    player.addEffect(exact);
+                    restored = true;
+                }
+                if (restored) activation(player, AspectIdentity.RENEWAL, "Benefits preserved");
             }
         }
         ConsumptionStart start = CONSUMPTION_STARTS.remove(player.getUUID());
@@ -468,6 +470,7 @@ public final class SalienceEvents {
     private record ConsumptionStart(NutritionSnapshot nutrition, double sugar, double debt, double alcohol,
                                     boolean edible) {}
     private record PendingMeal(ConsumptionStart start, long dueTick) {}
+    private record PreservedMilkEffects(List<MobEffectInstance> effects, long startedAt) {}
 
     private static double ordinary() { return SalienceConfig.ORDINARY_THRESHOLD.get(); }
     private static double prepared() { return SalienceConfig.PREPARED_THRESHOLD.get(); }

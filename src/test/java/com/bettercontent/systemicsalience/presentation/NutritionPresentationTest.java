@@ -16,10 +16,9 @@ final class NutritionPresentationTest {
     }
 
     @Test
-    void higherSugarNeverExtendsAStoredNutrientTier() {
-        int baseline = NutritionEstimates.nutrientSeconds(.95, .90, 0.0);
-        int amplified = NutritionEstimates.nutrientSeconds(.95, .90, .70);
-        assertTrue(amplified < baseline);
+    void dietOwnedDecayHasNoSyntheticSalienceCountdown() {
+        assertEquals(-1, NutritionEstimates.nutrientSeconds(.95, .90, 0.0));
+        assertEquals(-1, NutritionEstimates.nutrientSeconds(.95, .90, .70));
     }
 
     @Test

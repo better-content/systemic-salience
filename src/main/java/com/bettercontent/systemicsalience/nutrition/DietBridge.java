@@ -1,7 +1,5 @@
 package com.bettercontent.systemicsalience.nutrition;
 
-import com.bettercontent.systemicsalience.metabolism.MetabolicMath;
-import com.bettercontent.systemicsalience.metabolism.MetabolicState;
 import com.illusivesoulworks.diet.api.type.IDietTracker;
 import com.illusivesoulworks.diet.platform.Services;
 import net.minecraft.server.level.ServerPlayer;
@@ -20,22 +18,6 @@ public final class DietBridge {
         return tracker(player).map(DietBridge::snapshot).orElse(NutritionSnapshot.EMPTY);
     }
 
-    public static double applyCustomDecay(ServerPlayer player, MetabolicState state) {
-        Optional<? extends IDietTracker> optional = tracker(player);
-        if (optional.isEmpty()) return 0.0;
-
-        IDietTracker tracker = optional.get();
-        double extraDepletion = 0.0;
-        for (NutritionSnapshot.Group group : NutritionSnapshot.Group.values()) {
-            double current = tracker.getValue(group.id);
-            double baseline = MetabolicMath.nutrientDecayPerTick(current, 0.0) * 20.0;
-            double actual = MetabolicMath.nutrientDecayPerTick(current, state.sugar) * 20.0;
-            tracker.setValue(group.id, (float) Math.max(0.0, current - actual));
-            extraDepletion += Math.max(0.0, actual - baseline);
-        }
-        tracker.sync();
-        return extraDepletion / NutritionSnapshot.Group.values().length;
-    }
 
     private static NutritionSnapshot snapshot(IDietTracker tracker) {
         return new NutritionSnapshot(

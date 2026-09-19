@@ -7,17 +7,9 @@ public final class NutritionEstimates {
 
     private NutritionEstimates() {}
 
+    /** Diet owns native decay; no local estimate may pretend to be its authoritative timer. */
     public static int nutrientSeconds(double value, double threshold, double sugar) {
-        if (threshold <= 0.0 || value < threshold) return -1;
-        double nutrient = value;
-        double currentSugar = sugar;
-        double sugarRetention = Math.pow(MetabolicMath.tickSugar(1.0), 20.0);
-        for (int second = 1; second <= 1800; second++) {
-            nutrient = Math.max(0.0, nutrient - MetabolicMath.nutrientDecayPerTick(nutrient, currentSugar) * 20.0);
-            currentSugar *= sugarRetention;
-            if (nutrient < threshold) return second;
-        }
-        return OVER_THIRTY_MINUTES;
+        return -1;
     }
 
     public static int sugarSeconds(double sugar) {
