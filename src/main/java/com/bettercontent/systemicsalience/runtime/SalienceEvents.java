@@ -64,7 +64,7 @@ public final class SalienceEvents {
     private static final UUID ALCOHOL_ATTACK_TIMING = UUID.fromString("fb8c17f4-59c7-4cb4-b6e9-c31316286787");
     private static final UUID ALCOHOL_RECOIL = UUID.fromString("6b26319b-81c4-4b3e-8dd6-d2586fd23467");
     private static final UUID ALCOHOL_DISPERSION = UUID.fromString("219ddb4f-3df3-43c6-828c-f1bf7aff5bb8");
-    private static final java.util.Set<UUID> MILK_EFFECT_GUARD = new java.util.HashSet<>();
+    private static final MilkEffectGuard MILK_EFFECT_GUARD = new MilkEffectGuard();
     private static final Map<UUID, ConsumptionStart> CONSUMPTION_STARTS = new HashMap<>();
     private static final Map<UUID, PendingMeal> PENDING_MEALS = new HashMap<>();
     private static final NutritionSnapshot.Group[] GROUPS = NutritionSnapshot.Group.values();
@@ -158,14 +158,14 @@ public final class SalienceEvents {
                 && DietBridge.snapshot(player).actual(NutritionSnapshot.Group.DAIRY) >= prepared()) {
             // Guard removal itself: restoring through addEffect would cross RPG Stats Vitality's
             // duration-scaling hook and change the original expiry.
-            MILK_EFFECT_GUARD.add(player.getUUID());
+            MILK_EFFECT_GUARD.begin(player.getUUID());
         }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void preserveMilkEffects(MobEffectEvent.Remove event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
-        if (!MILK_EFFECT_GUARD.contains(player.getUUID())) return;
+        if (!MILK_EFFECT_GUARD.isGuarding(player.getUUID())) return;
         MobEffectInstance effect = event.getEffectInstance();
         if (effect != null && effect.getEffect().isBeneficial()) event.setCanceled(true);
     }
@@ -174,7 +174,7 @@ public final class SalienceEvents {
     public static void onUseStop(LivingEntityUseItemEvent.Stop event) {
         if (event.getEntity() instanceof ServerPlayer player
                 && event.getItem().is(net.minecraft.world.item.Items.MILK_BUCKET)) {
-            MILK_EFFECT_GUARD.remove(player.getUUID());
+            MILK_EFFECT_GUARD.clear(player.getUUID());
         }
     }
 
@@ -196,7 +196,10 @@ public final class SalienceEvents {
             ThirstCompat.addExhaustion(player, (float) (2.0 * alcohol));
         }
         if (stack.is(net.minecraft.world.item.Items.MILK_BUCKET)) {
-            if (MILK_EFFECT_GUARD.remove(player.getUUID())) activation(player, AspectIdentity.RENEWAL, "Benefits preserved");
+            if (MILK_EFFECT_GUARD.isGuarding(player.getUUID())) {
+                MILK_EFFECT_GUARD.clear(player.getUUID());
+                activation(player, AspectIdentity.RENEWAL, "Benefits preserved");
+            }
         }
         ConsumptionStart start = CONSUMPTION_STARTS.remove(player.getUUID());
         if (start != null) PENDING_MEALS.put(player.getUUID(), new PendingMeal(start, player.level().getGameTime() + 1L));
@@ -267,6 +270,11 @@ public final class SalienceEvents {
     @SubscribeEvent
     public static void onClone(PlayerEvent.Clone event) {
         if (!(event.getEntity() instanceof ServerPlayer replacement)) return;
+        // Death clones retain the player's UUID. A use interrupted by death must not preserve
+        // a milk guard into the replacement's later effect removals.
+        MILK_EFFECT_GUARD.clear(replacement.getUUID());
+        CONSUMPTION_STARTS.remove(replacement.getUUID());
+        PENDING_MEALS.remove(replacement.getUUID());
         if (event.isWasDeath()) MetabolicStateStore.reset(replacement);
         else MetabolicStateStore.copy(event.getOriginal(), replacement);
         EpicFightCompat.register(replacement);
@@ -278,7 +286,7 @@ public final class SalienceEvents {
         MetabolicStateStore.save(player);
         MetabolicStateStore.unload(player);
         ColdSweatCompat.unload(player);
-        MILK_EFFECT_GUARD.remove(player.getUUID());
+        MILK_EFFECT_GUARD.clear(player.getUUID());
         CONSUMPTION_STARTS.remove(player.getUUID());
         PENDING_MEALS.remove(player.getUUID());
     }
