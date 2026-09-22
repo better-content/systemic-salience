@@ -1,27 +1,31 @@
 package com.bettercontent.systemicsalience.metabolism;
 
+import com.bettercontent.systemicsalience.config.SalienceConfig;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MetabolicMathTest {
     @Test
-    void nutritionDecayRisesExponentiallyWithFullness() {
-        double atQuarter = MetabolicMath.nutrientDecayPerTick(0.25, 0.0);
-        double atHalf = MetabolicMath.nutrientDecayPerTick(0.50, 0.0);
-        double atFull = MetabolicMath.nutrientDecayPerTick(1.00, 0.0);
-
-        assertEquals(Math.exp(-1.0), atQuarter / atHalf, 1.0e-9);
-        assertEquals(Math.exp(2.0), atFull / atHalf, 1.0e-9);
+    void ordinaryNutritionDecayRemainsDietOwned() {
+        assertFalse(hasPublicMethod(MetabolicMath.class, "nutrientDecayPerTick"));
+        assertFalse(hasPublicMethod(MetabolicMath.class, "baselineNutrientDecayPerTick"));
+        assertFalse(hasPublicMethod(MetabolicMath.class, "nutrientDecayMultiplier"));
+        assertFalse(hasPublicField(MetabolicMath.class, "BASE_NUTRIENT_DECAY_PER_MINUTE"));
+        assertFalse(hasPublicField(SalienceConfig.class, "BASE_DECAY_PER_MINUTE"));
+        assertFalse(hasPublicField(SalienceConfig.class, "DECAY_EXPONENT"));
+        assertTrue(hasPublicMethod(com.bettercontent.systemicsalience.nutrition.DietBridge.class, "snapshot"));
     }
 
     @Test
     void sugarOwnsTempoWithoutAmplifyingOtherIdentities() {
         assertEquals(1.0, MetabolicMath.effectiveNutrient(1.0, 1.0, 0.0), 1.0e-9);
         assertEquals(1.0, MetabolicMath.thresholdPotency(1.0), 1.0e-9);
-        assertEquals(2.0, MetabolicMath.nutrientDecayMultiplier(0.25), 1.0e-9);
-        assertEquals(5.0, MetabolicMath.nutrientDecayMultiplier(1.0), 1.0e-9);
         assertEquals(0.65, MetabolicMath.cooldownMultiplier(1.0, 0.0), 1.0e-9);
     }
 
@@ -50,5 +54,19 @@ class MetabolicMathTest {
         double debt = 1.0;
         for (int i = 0; i < MetabolicMath.DEBT_HALF_LIFE_TICKS; i++) debt = MetabolicMath.tickDebt(debt, 0.0);
         assertEquals(0.5, debt, 1.0e-8);
+    }
+
+    private static boolean hasPublicMethod(Class<?> type, String name) {
+        for (Method method : type.getMethods()) {
+            if (method.getName().equals(name)) return true;
+        }
+        return false;
+    }
+
+    private static boolean hasPublicField(Class<?> type, String name) {
+        for (Field field : type.getFields()) {
+            if (field.getName().equals(name)) return true;
+        }
+        return false;
     }
 }

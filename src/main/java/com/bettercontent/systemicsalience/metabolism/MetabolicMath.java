@@ -3,30 +3,11 @@ package com.bettercontent.systemicsalience.metabolism;
 import com.bettercontent.systemicsalience.config.SalienceConfig;
 
 public final class MetabolicMath {
-    public static final double BASE_NUTRIENT_DECAY_PER_MINUTE = 0.004;
     public static final int SUGAR_HALF_LIFE_TICKS = 4 * 60 * 20;
     public static final int DEBT_HALF_LIFE_TICKS = 10 * 60 * 20;
     public static final int ALCOHOL_CLEAR_TICKS = 20 * 60 * 20;
 
     private MetabolicMath() {}
-
-    public static double nutrientDecayPerTick(double nutrient, double sugar) {
-        double baseline = configured(SalienceConfig.BASE_DECAY_PER_MINUTE, BASE_NUTRIENT_DECAY_PER_MINUTE)
-                * Math.exp(configured(SalienceConfig.DECAY_EXPONENT, 4.0) * (clamp01(nutrient) - 0.5))
-                / (60.0 * 20.0);
-        return baseline * nutrientDecayMultiplier(sugar);
-    }
-
-    public static double baselineNutrientDecayPerTick(double nutrient) {
-        return nutrientDecayPerTick(nutrient, 0.0);
-    }
-
-    public static double nutrientDecayMultiplier(double sugar) {
-        double s = clamp01(sugar);
-        if (s >= 0.60) return 5.0;
-        if (s >= 0.25) return 2.0;
-        return 1.0;
-    }
 
     public static double thresholdPotency(double sugar) {
         return 1.0;

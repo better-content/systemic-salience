@@ -19,8 +19,6 @@ public final class SalienceConfig {
     );
 
     public static final ForgeConfigSpec SPEC;
-    public static final ForgeConfigSpec.DoubleValue BASE_DECAY_PER_MINUTE;
-    public static final ForgeConfigSpec.DoubleValue DECAY_EXPONENT;
     public static final ForgeConfigSpec.DoubleValue SUGAR_HALF_LIFE_MINUTES;
     public static final ForgeConfigSpec.DoubleValue DEBT_HALF_LIFE_MINUTES;
     public static final ForgeConfigSpec.DoubleValue ALCOHOL_CLEAR_MINUTES;
@@ -32,9 +30,7 @@ public final class SalienceConfig {
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
-        builder.comment("Superlinear ordinary nutrition, Tempo sugar/debt, and Control alcohol tuning.").push("metabolism");
-        BASE_DECAY_PER_MINUTE = range(builder, "baseNutrientDecayPerMinute", 0.004, 0.0001, 0.1);
-        DECAY_EXPONENT = range(builder, "fullnessDecayExponent", 4.0, 0.1, 12.0);
+        builder.comment("Tempo sugar/debt and Control alcohol tuning.").push("metabolism");
         SUGAR_HALF_LIFE_MINUTES = range(builder, "sugarHalfLifeMinutes", 4.0, 0.1, 120.0);
         DEBT_HALF_LIFE_MINUTES = range(builder, "debtHalfLifeMinutes", 10.0, 0.1, 240.0);
         ALCOHOL_CLEAR_MINUTES = range(builder, "alcoholClearMinutes", 20.0, 0.1, 240.0);
