@@ -3,8 +3,8 @@ package com.bettercontent.systemicsalience.metabolism;
 import com.bettercontent.systemicsalience.config.SalienceConfig;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -12,14 +12,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MetabolicMathTest {
     @Test
-    void ordinaryNutritionDecayRemainsDietOwned() {
-        assertFalse(hasPublicMethod(MetabolicMath.class, "nutrientDecayPerTick"));
-        assertFalse(hasPublicMethod(MetabolicMath.class, "baselineNutrientDecayPerTick"));
-        assertFalse(hasPublicMethod(MetabolicMath.class, "nutrientDecayMultiplier"));
-        assertFalse(hasPublicField(MetabolicMath.class, "BASE_NUTRIENT_DECAY_PER_MINUTE"));
-        assertFalse(hasPublicField(SalienceConfig.class, "BASE_DECAY_PER_MINUTE"));
-        assertFalse(hasPublicField(SalienceConfig.class, "DECAY_EXPONENT"));
-        assertTrue(hasPublicMethod(com.bettercontent.systemicsalience.nutrition.DietBridge.class, "snapshot"));
+    void ordinaryNutritionDecayRemainsDietOwned() throws Exception {
+        String math = Files.readString(Path.of("src/main/java/com/bettercontent/systemicsalience/metabolism/MetabolicMath.java"));
+        String config = Files.readString(Path.of("src/main/java/com/bettercontent/systemicsalience/config/SalienceConfig.java"));
+        String bridge = Files.readString(Path.of("src/main/java/com/bettercontent/systemicsalience/nutrition/DietBridge.java"));
+        for (String method : new String[] {"nutrientDecayPerTick", "baselineNutrientDecayPerTick", "nutrientDecayMultiplier"}) {
+            assertFalse(hasPublicMethod(math, method), method);
+        }
+        assertFalse(hasPublicField(math, "BASE_NUTRIENT_DECAY_PER_MINUTE"));
+        assertFalse(hasPublicField(config, "BASE_DECAY_PER_MINUTE"));
+        assertFalse(hasPublicField(config, "DECAY_EXPONENT"));
+        assertTrue(hasPublicMethod(bridge, "snapshot"));
     }
 
     @Test
@@ -56,17 +59,11 @@ class MetabolicMathTest {
         assertEquals(0.5, debt, 1.0e-8);
     }
 
-    private static boolean hasPublicMethod(Class<?> type, String name) {
-        for (Method method : type.getMethods()) {
-            if (method.getName().equals(name)) return true;
-        }
-        return false;
+    private static boolean hasPublicMethod(String source, String name) {
+        return source.matches("(?s).*\\bpublic\\s+(?:static\\s+)?[^;{}]*\\b" + name + "\\s*\\(.*");
     }
 
-    private static boolean hasPublicField(Class<?> type, String name) {
-        for (Field field : type.getFields()) {
-            if (field.getName().equals(name)) return true;
-        }
-        return false;
+    private static boolean hasPublicField(String source, String name) {
+        return source.matches("(?s).*\\bpublic\\s+(?:static\\s+)?[^;{}()]*\\b" + name + "\\s*(?:=|;|,).*");
     }
 }
