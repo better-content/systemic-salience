@@ -75,11 +75,12 @@ public final class SalienceEvents {
 
     private SalienceEvents() {}
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player)) return;
         MetabolicState state = MetabolicStateStore.get(player);
         state.tickTransient();
+        DietBridge.syncMetabolic(player, state);
         NutritionSnapshot nutrition = DietBridge.snapshot(player);
 
         state.sprintTicks = player.isSprinting() ? state.sprintTicks + 1 : 0;
@@ -178,7 +179,7 @@ public final class SalienceEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onUseFinish(LivingEntityUseItemEvent.Finish event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         ItemStack stack = event.getItem();
@@ -195,6 +196,7 @@ public final class SalienceEvents {
             state.addAlcohol(alcohol);
             ThirstCompat.addExhaustion(player, (float) (2.0 * alcohol));
         }
+        if (sugar > 0.0 || alcohol > 0.0) DietBridge.syncMetabolic(player, state);
         if (stack.is(net.minecraft.world.item.Items.MILK_BUCKET)) {
             if (MILK_EFFECT_GUARD.isGuarding(player.getUUID())) {
                 MILK_EFFECT_GUARD.clear(player.getUUID());

@@ -2,7 +2,7 @@ package com.bettercontent.systemicsalience.nutrition;
 
 import com.illusivesoulworks.diet.api.type.IDietTracker;
 import com.illusivesoulworks.diet.platform.Services;
-import net.minecraft.server.level.ServerPlayer;
+import com.bettercontent.systemicsalience.metabolism.MetabolicState;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.Optional;
@@ -16,6 +16,21 @@ public final class DietBridge {
 
     public static NutritionSnapshot snapshot(Player player) {
         return tracker(player).map(DietBridge::snapshot).orElse(NutritionSnapshot.EMPTY);
+    }
+
+    /** Expose the two optional metabolic loads through Diet's native tracker and screen. */
+    public static void syncMetabolic(Player player, MetabolicState state) {
+        tracker(player).ifPresent(diet -> {
+            boolean changed = mirror(diet, "sugars", (float) state.sugar);
+            changed |= mirror(diet, "alcohol", (float) state.alcohol);
+            if (changed) diet.sync();
+        });
+    }
+
+    private static boolean mirror(IDietTracker diet, String group, float value) {
+        if (!diet.getValues().containsKey(group) || Math.abs(diet.getValue(group) - value) < 0.005f) return false;
+        diet.setValue(group, value);
+        return true;
     }
 
 

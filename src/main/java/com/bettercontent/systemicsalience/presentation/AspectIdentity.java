@@ -30,7 +30,8 @@ public enum AspectIdentity {
 
     public static AspectIdentity fromGroupName(String name) {
         String normalized = (name.contains(":") ? name.substring(name.indexOf(':') + 1) : name).toLowerCase(Locale.ROOT);
-        return Arrays.stream(values()).filter(value -> value.representative.equals(normalized)).findFirst().orElse(null);
+        String identity = normalized.equals("sugars") ? "sugar" : normalized; // Diet's native group is plural.
+        return Arrays.stream(values()).filter(value -> value.representative.equals(identity)).findFirst().orElse(null);
     }
 
     public static Comparator<AspectIdentity> displayOrder() { return Comparator.comparingInt(value -> value.icon); }
