@@ -1,15 +1,17 @@
 package com.bettercontent.systemicsalience.presentation;
 
 import com.bettercontent.systemicsalience.metabolism.MetabolicMath;
+import com.bettercontent.systemicsalience.config.SalienceConfig;
+import com.bettercontent.systemicsalience.nutrition.NutritionDrain;
 
 public final class NutritionEstimates {
     public static final int OVER_THIRTY_MINUTES = 1801;
 
     private NutritionEstimates() {}
 
-    /** Diet owns native decay; no local estimate may pretend to be its authoritative timer. */
     public static int nutrientSeconds(double value, double threshold, double sugar) {
-        return -1;
+        return NutritionDrain.secondsUntilBelow(value, threshold,
+                SalienceConfig.value(SalienceConfig.PREPARED_THRESHOLD, 0.75), sugar);
     }
 
     public static int sugarSeconds(double sugar) {

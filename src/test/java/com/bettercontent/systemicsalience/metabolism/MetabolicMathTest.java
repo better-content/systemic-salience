@@ -29,7 +29,7 @@ class MetabolicMathTest {
     void sugarOwnsTempoWithoutAmplifyingOtherIdentities() {
         assertEquals(1.0, MetabolicMath.effectiveNutrient(1.0, 1.0, 0.0), 1.0e-9);
         assertEquals(1.0, MetabolicMath.thresholdPotency(1.0), 1.0e-9);
-        assertEquals(0.65, MetabolicMath.cooldownMultiplier(1.0, 0.0), 1.0e-9);
+        assertEquals(0.50, MetabolicMath.cooldownMultiplier(1.0, 0.0), 1.0e-9);
     }
 
     @Test

@@ -15,6 +15,7 @@ import net.minecraftforge.event.entity.living.MobEffectEvent;
 import com.bettercontent.systemicsalience.network.SalienceNetwork;
 import com.bettercontent.systemicsalience.network.MealFeedbackPacket;
 import com.bettercontent.systemicsalience.nutrition.DietBridge;
+import com.bettercontent.systemicsalience.nutrition.NutritionDrain;
 import com.bettercontent.systemicsalience.nutrition.NutritionSnapshot;
 import com.bettercontent.systemicsalience.nutrition.NutritionThreadBoundary;
 import com.bettercontent.systemicsalience.presentation.AspectIdentity;
@@ -100,9 +101,10 @@ public final class SalienceEvents {
         boolean presentationChanged = updatePresentationFeedback(player, state, presentation.flags());
 
         if (player.tickCount % 20 == 0) {
-            // Diet owns decay, values, effects and tracker persistence. Salience only reads its
-            // settled snapshot for aspect abilities, optional sugar/alcohol cues, and Threads.
+            DietBridge.drainUpperBand(player, prepared(), state.sugar);
+            if (DietBridge.tracker(player).isPresent()) state.addDebt(NutritionDrain.debtPerSecond(state.sugar));
             NutritionSnapshot authoritativeNutrition = DietBridge.snapshot(player);
+            updateNutritionFalls(player, state, authoritativeNutrition);
             if (DietBridge.tracker(player).isPresent()) {
                 NutritionThreadBoundary.onAuthoritativeTick(player, authoritativeNutrition, ordinary());
             }
@@ -119,8 +121,8 @@ public final class SalienceEvents {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         MetabolicState state = MetabolicStateStore.get(player);
         double grains = DietBridge.snapshot(player).actual(NutritionSnapshot.Group.GRAINS);
-        double bonus = grains >= feast() ? 0.20 + Math.min(0.20, state.workSequence * 0.04)
-                : grains >= prepared() ? 0.20 : grains >= ordinary() ? 0.10 : 0.0;
+        double bonus = grains >= feast() ? 1.0 + Math.min(1.0, state.workSequence * 0.20)
+                : grains >= prepared() ? 1.0 : grains >= ordinary() ? 0.10 : 0.0;
         event.setNewSpeed((float) (event.getNewSpeed() * (1.0 + bonus)));
     }
 
@@ -221,6 +223,8 @@ public final class SalienceEvents {
         if (heavy) {
             force += 1.0;
             state.heavyBlowCooldown = 8 * 20;
+            state.heavyBlowTarget = target.getUUID();
+            state.heavyBlowAttackTick = now;
             impactApplied = EpicFightCompat.tryImpact(target, 1.0);
             cueAt(player, AspectIdentity.IMPACT, "Heavy Blow", target.getX(),
                     target.getY() + target.getBbHeight() * .6, target.getZ(), 14);
@@ -233,13 +237,26 @@ public final class SalienceEvents {
         state.lastAttackTick = now;
     }
 
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onMeleeDamage(LivingHurtEvent event) {
+        if (!(event.getSource().getEntity() instanceof ServerPlayer player)
+                || event.getSource().getDirectEntity() != player) return;
+        double proteins = DietBridge.snapshot(player).actual(NutritionSnapshot.Group.PROTEINS);
+        if (proteins < prepared()) return;
+        MetabolicState state = MetabolicStateStore.get(player);
+        boolean heavy = proteins >= feast() && event.getEntity().getUUID().equals(state.heavyBlowTarget)
+                && player.level().getGameTime() == state.heavyBlowAttackTick;
+        event.setAmount(event.getAmount() * (heavy ? 3.0f : 1.75f));
+        if (heavy) state.heavyBlowTarget = null;
+    }
+
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onKnockback(LivingKnockBackEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         MetabolicState state = MetabolicStateStore.get(player);
         if (DietBridge.snapshot(player).actual(NutritionSnapshot.Group.VEGETABLES) >= feast() && state.weatheredCooldown == 0) {
             event.setCanceled(true);
-            state.weatheredCooldown = 90 * 20;
+            state.weatheredCooldown = 30 * 20;
             activation(player, AspectIdentity.ROBUSTNESS, "Weathered Guard");
         }
     }
@@ -250,7 +267,8 @@ public final class SalienceEvents {
         MetabolicState state = MetabolicStateStore.get(player);
         if (DietBridge.snapshot(player).actual(NutritionSnapshot.Group.VEGETABLES) >= feast() && state.weatheredCooldown == 0) {
             ColdSweatCompat.pullSafe(player);
-            state.weatheredCooldown = 90 * 20;
+            event.setCanceled(true);
+            state.weatheredCooldown = 30 * 20;
             activation(player, AspectIdentity.ROBUSTNESS, "Weathered Guard");
         }
     }
@@ -295,31 +313,31 @@ public final class SalienceEvents {
 
     private static void applyIdentityModifiers(ServerPlayer player, MetabolicState state, NutritionSnapshot nutrition) {
         double fruits = nutrition.actual(NutritionSnapshot.Group.FRUITS);
-        double movement = fruits >= feast() && state.sprintTicks >= 60 ? 0.15 : fruits >= prepared() ? 0.10 : fruits >= ordinary() ? 0.05 : 0.0;
-        double step = fruits >= feast() && state.sprintTicks >= 60 ? 1.0 : fruits >= prepared() ? 0.5 : 0.0;
+        double movement = fruits >= feast() && state.sprintTicks >= 60 ? 1.0 : fruits >= prepared() ? 0.50 : fruits >= ordinary() ? 0.05 : 0.0;
+        double step = fruits >= feast() && state.sprintTicks >= 60 ? 1.0 : fruits >= prepared() ? 1.0 : 0.0;
         updateAttribute(player, "minecraft:generic.movement_speed", FRUIT_MOVE, movement, AttributeModifier.Operation.MULTIPLY_TOTAL, "salience_fruit_stride");
         updateAttribute(player, "forge:swim_speed", FRUIT_SWIM, movement, AttributeModifier.Operation.MULTIPLY_TOTAL, "salience_fruit_swim");
         updateAttribute(player, "forge:step_height_addition", FRUIT_STEP, step, AttributeModifier.Operation.ADDITION, "salience_fruit_step");
 
         double vegetables = nutrition.actual(NutritionSnapshot.Group.VEGETABLES);
         updateAttribute(player, "minecraft:generic.knockback_resistance", VEGETABLE_KNOCKBACK,
-                vegetables >= prepared() ? 0.10 : 0.0, AttributeModifier.Operation.ADDITION, "salience_vegetable_weathered");
-        double driftResistance = vegetables >= prepared() ? 0.30 : vegetables >= ordinary() ? 0.15 : 0.0;
+                vegetables >= prepared() ? 0.50 : 0.0, AttributeModifier.Operation.ADDITION, "salience_vegetable_weathered");
+        double driftResistance = vegetables >= prepared() ? 0.80 : vegetables >= ordinary() ? 0.15 : 0.0;
         if (driftResistance > 0.0) ColdSweatCompat.dampenDrift(player, driftResistance);
 
-        double tempo = state.sugar >= 0.60 ? 0.35 : state.sugar >= 0.25 ? 0.15 : 0.0;
+        double tempo = state.sugar >= 0.60 ? 1.0 : state.sugar >= 0.25 ? 0.50 : 0.0;
         updateAttribute(player, "minecraft:generic.attack_speed", SUGAR_ATTACK_SPEED, tempo,
                 AttributeModifier.Operation.MULTIPLY_TOTAL, "salience_sugar_tempo");
         updateAttribute(player, "tconstruct:player.use_item_speed", SUGAR_USE_SPEED, tempo,
                 AttributeModifier.Operation.MULTIPLY_TOTAL, "salience_sugar_use_tempo");
 
-        double control = 0.30 * MetabolicMath.alcoholPositive(state.alcohol) - 0.60 * MetabolicMath.alcoholImpairment(state.alcohol);
+        double control = 0.75 * MetabolicMath.alcoholPositive(state.alcohol) - 0.75 * MetabolicMath.alcoholImpairment(state.alcohol);
         updateAttribute(player, "rpg_stats:recoil_reduction", ALCOHOL_RECOIL, control,
                 AttributeModifier.Operation.ADDITION, "salience_alcohol_recoil");
         updateAttribute(player, "rpg_stats:dispersion_reduction", ALCOHOL_DISPERSION, control,
                 AttributeModifier.Operation.ADDITION, "salience_alcohol_dispersion");
         updateAttribute(player, "minecraft:generic.attack_speed", ALCOHOL_ATTACK_TIMING,
-                -0.35 * MetabolicMath.alcoholImpairment(state.alcohol), AttributeModifier.Operation.MULTIPLY_TOTAL,
+                -0.50 * MetabolicMath.alcoholImpairment(state.alcohol), AttributeModifier.Operation.MULTIPLY_TOTAL,
                 "salience_alcohol_timing");
         EpicFightCompat.reinforceStunShield(player, MetabolicMath.alcoholPositive(state.alcohol));
         if (state.alcohol >= 0.90 && player.tickCount % 80 == 0) {
@@ -335,25 +353,25 @@ public final class SalienceEvents {
                 if (effect.getEffect().getCategory() == MobEffectCategory.HARMFUL && !effect.isInfiniteDuration()) {
                     if (player.removeEffect(effect.getEffect()))
                         metabolicDiscovery(player, com.bettercontent.systemicsalience.api.event.MetabolicDiscoveryEvent.Kind.CLEANSE, effect.getEffect().getDisplayName().getString());
-                    state.dairyCleanseCooldown = 90 * 20;
+                    state.dairyCleanseCooldown = 20 * 20;
                     activation(player, AspectIdentity.RENEWAL, "Cleansed " + effect.getEffect().getDisplayName().getString());
                     break;
                 }
             }
         }
-        int interval = dairy >= prepared() ? 5 : dairy >= ordinary() ? 10 : 0;
-        if (interval == 0 || player.tickCount % interval != 0) return;
+        int extraTicks = dairy >= prepared() ? 3 : dairy >= ordinary() ? (player.tickCount % 10 == 0 ? 1 : 0) : 0;
+        if (extraTicks == 0) return;
         for (MobEffectInstance effect : player.getActiveEffects()) {
             if (effect.getEffect().getCategory() != MobEffectCategory.HARMFUL || effect.isInfiniteDuration()) continue;
             MobEffectInstanceAccessor accessor = (MobEffectInstanceAccessor) effect;
-            accessor.systemicSalience$setDuration(Math.max(1, accessor.systemicSalience$getDuration() - 1));
+            accessor.systemicSalience$setDuration(Math.max(1, accessor.systemicSalience$getDuration() - extraTicks));
         }
     }
 
     private static void applyEnduranceReserve(ServerPlayer player, MetabolicState state, NutritionSnapshot nutrition) {
         if (nutrition.actual(NutritionSnapshot.Group.FATS) < feast() || state.enduranceReserveCooldown > 0) return;
         if (player.getFoodData().getFoodLevel() <= 2 || ThirstCompat.isLow(player) || EpicFightCompat.isStaminaBelow(player, 0.10)) {
-            state.enduranceReserveTicks = 5 * 20;
+            state.enduranceReserveTicks = 10 * 20;
             state.enduranceReserveCooldown = 2 * 60 * 20;
             activation(player, AspectIdentity.ENDURANCE, "Deep Reserve");
             metabolicDiscovery(player, com.bettercontent.systemicsalience.api.event.MetabolicDiscoveryEvent.Kind.DEEP_RESERVE, "A nutritional reserve activated during resource depletion");
@@ -411,6 +429,25 @@ public final class SalienceEvents {
             player.level().playSound(null, player.blockPosition(), ModSounds.brokenTempo(), SoundSource.PLAYERS, .48f, 1.0f);
         }
         return previous != flags;
+    }
+
+    private static void updateNutritionFalls(ServerPlayer player, MetabolicState state, NutritionSnapshot nutrition) {
+        List<String> faded = new ArrayList<>();
+        AspectIdentity audible = null;
+        for (int index = 0; index < GROUPS.length; index++) {
+            byte current = (byte) NutritionTier.of(nutrition.actual(GROUPS[index]), ordinary(), prepared(), feast()).ordinal();
+            byte previous = state.lastNutritionTiers[index];
+            state.lastNutritionTiers[index] = current;
+            if (previous < NutritionTier.PREPARED.ordinal() || current >= previous) continue;
+            AspectIdentity aspect = NUTRIENT_ASPECTS[index];
+            if (audible == null) audible = aspect;
+            String group = aspect.representative;
+            faded.add(group.substring(0, 1).toUpperCase() + group.substring(1));
+        }
+        if (audible == null) return;
+        player.displayClientMessage(Component.literal("Diet waning — " + String.join(", ", faded))
+                .withStyle(style -> style.withColor(0xEEE8D8)), true);
+        playAspectSound(player, audible, .20f);
     }
 
     private static void metabolicDiscovery(ServerPlayer player, com.bettercontent.systemicsalience.api.event.MetabolicDiscoveryEvent.Kind kind, String detail) {

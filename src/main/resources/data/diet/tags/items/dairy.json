@@ -7,6 +7,14 @@
     {"id": "brewinandchewin:flaxen_cheese_wedge", "required": false},
     {"id": "brewinandchewin:scarlet_cheese_wedge", "required": false},
     {"id": "ubesdelight:condensed_milk_bottle", "required": false},
-    {"id": "collectorsreap:cream_cheese", "required": false}
+    {"id": "collectorsreap:cream_cheese", "required": false},
+    {"id": "croptopia:milk_bottle", "required": false},
+    {"id": "pamhc2foodcore:freshmilkitem", "required": false},
+    {"id": "rankine:cheese", "required": false},
+    {"id": "rankine:aged_cheese", "required": false},
+    {"id": "rankine:unaged_cheese", "required": false},
+    {"id": "rats:blue_cheese", "required": false},
+    {"id": "betteranimalsplus:goatmilk", "required": false},
+    {"id": "betteranimalsplus:goatcheese", "required": false}
   ]
 }

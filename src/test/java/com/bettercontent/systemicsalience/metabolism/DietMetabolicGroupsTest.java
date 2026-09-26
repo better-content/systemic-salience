@@ -24,6 +24,12 @@ class DietMetabolicGroupsTest {
         assertTrue(suite.getAsJsonArray("effects").isEmpty());
         assertEquals(AspectIdentity.TEMPO, AspectIdentity.fromGroupName("diet:sugars"));
         assertEquals(AspectIdentity.CONTROL, AspectIdentity.fromGroupName("diet:alcohol"));
+        for (AspectIdentity aspect : AspectIdentity.values()) {
+            String group = aspect == AspectIdentity.TEMPO ? "sugars" : aspect.representative;
+            var definition = json("/data/diet/diet/groups/" + group + ".json");
+            assertEquals(aspect.icon, definition.get("order").getAsInt());
+            assertEquals(String.format("#%06X", aspect.color), definition.get("color").getAsString());
+        }
     }
 
     @Test

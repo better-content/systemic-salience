@@ -16,9 +16,10 @@ final class NutritionPresentationTest {
     }
 
     @Test
-    void dietOwnedDecayHasNoSyntheticSalienceCountdown() {
-        assertEquals(-1, NutritionEstimates.nutrientSeconds(.95, .90, 0.0));
-        assertEquals(-1, NutritionEstimates.nutrientSeconds(.95, .90, .70));
+    void upperBandCountdownReflectsTheActiveSugarLoad() {
+        assertTrue(Math.abs(NutritionEstimates.nutrientSeconds(.95, .90, 0.0) - 100) <= 1);
+        assertTrue(Math.abs(NutritionEstimates.nutrientSeconds(.95, .90, .70) - 20) <= 1);
+        assertEquals(-1, NutritionEstimates.nutrientSeconds(.70, .50, 0.0));
     }
 
     @Test

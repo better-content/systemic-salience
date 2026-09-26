@@ -33,8 +33,8 @@ public final class EpicFightCompat {
             var state = MetabolicStateStore.get(player);
             double impairment = MetabolicMath.alcoholImpairment(state.alcohol);
             double fats = DietBridge.snapshot(player).actual(NutritionSnapshot.Group.FATS);
-            double endurance = fats >= SalienceConfig.FEAST_THRESHOLD.get() ? 0.60
-                    : fats >= SalienceConfig.PREPARED_THRESHOLD.get() ? 0.75
+            double endurance = fats >= SalienceConfig.FEAST_THRESHOLD.get() ? 0.15
+                    : fats >= SalienceConfig.PREPARED_THRESHOLD.get() ? 0.30
                     : fats >= SalienceConfig.ORDINARY_THRESHOLD.get() ? 0.90 : 1.0;
             event.setAmount(state.enduranceReserveTicks > 0 ? 0.0f
                     : (float) (event.getAmount() * endurance * (1.0 + 0.75 * impairment)));

@@ -6,7 +6,12 @@
   "refmap": "systemic_salience.refmap.json",
   "mixins": [
     "MobEffectInstanceAccessor",
-    "PlayerExhaustionMixin"
+    "PlayerExhaustionMixin",
+    "ThirstExhaustionMixin"
+  ],
+  "client": [
+    "DietScreenAccessor",
+    "DietScreenOrderMixin"
   ],
   "injectors": {
     "defaultRequire": 1

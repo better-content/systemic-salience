@@ -4,9 +4,21 @@
     {"id": "#forge:eggs", "required": false},
     {"id": "#forge:raw_eggs", "required": false},
     {"id": "#forge:cooked_eggs", "required": false},
+    {"id": "#forge:nuts", "required": false},
     {"id": "minecraft:egg", "required": false},
     {"id": "farmersdelight:fried_egg", "required": false},
     {"id": "farmersdelight:bacon_and_eggs", "required": false},
-    {"id": "delightful:nut_butter_bottle", "required": false}
+    {"id": "delightful:nut_butter_bottle", "required": false},
+    {"id": "delightful:animal_fat", "required": false},
+    {"id": "delightful:honey_glazed_walnut", "required": false},
+    {"id": "croptopia:almond", "required": false},
+    {"id": "croptopia:cashew", "required": false},
+    {"id": "croptopia:peanut", "required": false},
+    {"id": "croptopia:pecan", "required": false},
+    {"id": "croptopia:walnut", "required": false},
+    {"id": "croptopia:olive", "required": false},
+    {"id": "ecologics:walnut", "required": false},
+    {"id": "simplefarming:olives", "required": false},
+    {"id": "culturaldelights:avocado", "required": false}
   ]
 }

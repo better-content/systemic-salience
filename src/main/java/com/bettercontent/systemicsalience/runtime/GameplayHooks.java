@@ -17,8 +17,8 @@ public final class GameplayHooks {
         float multiplier = 1.0f;
         NutritionSnapshot nutrition = DietBridge.snapshot(player);
         double fats = nutrition.effective(NutritionSnapshot.Group.FATS, state);
-        if (fats >= SalienceConfig.FEAST_THRESHOLD.get()) multiplier *= 0.60f;
-        else if (fats >= SalienceConfig.PREPARED_THRESHOLD.get()) multiplier *= 0.75f;
+        if (fats >= SalienceConfig.FEAST_THRESHOLD.get()) multiplier *= 0.15f;
+        else if (fats >= SalienceConfig.PREPARED_THRESHOLD.get()) multiplier *= 0.30f;
         else if (fats >= SalienceConfig.ORDINARY_THRESHOLD.get()) multiplier *= 0.90f;
         if (state.sugar < SalienceConfig.SUGAR_DEBT_GATE.get()) multiplier *= (float) (1.0 + 0.5 * state.debt);
         return multiplier;

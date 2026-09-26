@@ -18,6 +18,22 @@ public final class DietBridge {
         return tracker(player).map(DietBridge::snapshot).orElse(NutritionSnapshot.EMPTY);
     }
 
+    /** Diet keeps the values and persistence; the temporary upper band has a real-time cost. */
+    public static boolean drainUpperBand(Player player, double prepared, double sugar) {
+        return tracker(player).map(diet -> {
+            boolean changed = false;
+            for (NutritionSnapshot.Group group : NutritionSnapshot.Group.values()) {
+                float before = diet.getValue(group.id);
+                float after = NutritionDrain.next(before, prepared, sugar);
+                if (after >= before) continue;
+                diet.setValue(group.id, after);
+                changed = true;
+            }
+            if (changed) diet.sync();
+            return changed;
+        }).orElse(false);
+    }
+
     /** Expose the two optional metabolic loads through Diet's native tracker and screen. */
     public static void syncMetabolic(Player player, MetabolicState state) {
         tracker(player).ifPresent(diet -> {

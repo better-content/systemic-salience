@@ -24,7 +24,10 @@ public final class MetabolicState {
     public int workSequence;
     public long lastBreakTick = -100L;
     public long lastAttackTick = -100L;
+    public transient java.util.UUID heavyBlowTarget;
+    public transient long heavyBlowAttackTick = -1L;
     public transient int lastPresentationFlags = -1;
+    public transient byte[] lastNutritionTiers = {-1, -1, -1, -1, -1, -1};
 
     public void tickTransient() {
         sugar = MetabolicMath.tickSugar(sugar);

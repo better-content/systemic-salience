@@ -4,6 +4,7 @@ import com.bettercontent.systemicsalience.SystemicSalienceMod;
 import com.bettercontent.systemicsalience.metabolism.ConsumableProfiles;
 import com.bettercontent.systemicsalience.network.MetabolicSyncPacket;
 import com.bettercontent.systemicsalience.presentation.AspectIdentity;
+import com.bettercontent.systemicsalience.presentation.DietBenefits;
 import com.bettercontent.systemicsalience.presentation.PresentationFlags;
 import com.illusivesoulworks.diet.api.DietApi;
 import com.illusivesoulworks.diet.api.type.IDietGroup;
@@ -83,6 +84,10 @@ public final class ClientSalienceEvents {
                             .withStyle(style -> style.withColor(identity.color)));
         }
         event.getToolTip().add(line);
+        AspectIdentity first = identities.get(0);
+        String promise = DietBenefits.preparedPromise(first);
+        event.getToolTip().add(Component.literal(promise + (identities.size() > 1 ? " · See Diet for all effects" : ""))
+                .withStyle(style -> style.withColor(0xD8D5CE)));
     }
 
     private static List<Icon> activeIcons(MetabolicSyncPacket state) {

@@ -15,8 +15,8 @@ public final class MetabolicMath {
 
     public static double cooldownMultiplier(double sugar, double debt) {
         double s = clamp01(sugar);
-        if (s >= 0.60) return 0.65;
-        if (s >= 0.25) return 0.85;
+        if (s >= 0.60) return 0.50;
+        if (s >= 0.25) return 0.67;
         return 1.0 + 0.5 * clamp01(debt);
     }
 

@@ -1,7 +1,7 @@
 {
-  "icon": "minecraft:egg",
-  "color": "#52606A",
-  "order": 4,
+  "icon": "minecraft:bread",
+  "color": "#F0E2C5",
+  "order": 2,
   "default_value": 0.0,
   "gain_multiplier": 1.0,
   "decay_multiplier": 1.0,

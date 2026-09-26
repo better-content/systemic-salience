@@ -2,6 +2,7 @@ package com.bettercontent.systemicsalience.client;
 
 import com.bettercontent.systemicsalience.network.MealFeedbackPacket;
 import com.bettercontent.systemicsalience.presentation.AspectIdentity;
+import com.bettercontent.systemicsalience.presentation.DietBenefits;
 import com.bettercontent.systemicsalience.presentation.NutritionEstimates;
 import com.bettercontent.systemicsalience.presentation.NutritionTier;
 import net.minecraft.client.Minecraft;
@@ -106,9 +107,10 @@ public final class MealRecap {
                 case NUTRIENT -> aspect.representative.substring(0, 1).toUpperCase() + aspect.representative.substring(1)
                         + " — "
                         + (tier == NutritionTier.BUILDING ? "Undernourished · " + Math.round(value * 100) + "%"
-                        : tier.name().substring(0, 1) + tier.name().substring(1).toLowerCase());
-                case SUGAR_ONE -> "Sugar — » Tempo I · nutrition burns 2×";
-                case SUGAR_TWO -> "Sugar — » Tempo II · nutrition burns 5×";
+                        : tier.name().substring(0, 1) + tier.name().substring(1).toLowerCase()
+                        + " · " + DietBenefits.effect(aspect, tier));
+                case SUGAR_ONE -> "Sugar — » Tempo I · cadence +50%, upper nutrition burns 2×";
+                case SUGAR_TWO -> "Sugar — » Tempo II · cadence +100%, upper nutrition burns 5×";
                 case SUGAR_CRASH -> "Sugar — » Tempo crash";
                 case ALCOHOL_LOW -> "Alcohol — ⊕ Control · Low";
                 case ALCOHOL_COMPOSED -> "Alcohol — ⊕ Control · Composed";
